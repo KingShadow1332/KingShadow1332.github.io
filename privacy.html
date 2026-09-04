@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A.R.I Kalender Datenschutz</title>
+<meta name="description" content="Datenschutzerklärung für die Google-Kalender-Anbindung des privaten A.R.I-Assistenten.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf9f6;
+    --surface:#ffffff;
+    --ink:#1c1e22;
+    --ink-dim:#565a61;
+    --ink-faint:#8a8e95;
+    --accent:#3457d5;
+    --accent-ink:#22377f;
+    --line:#e5e2db;
+    --good:#2f7d4f;
+    --good-bg:#eaf4ee;
+    --radius:3px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#15161a;
+      --surface:#1c1e23;
+      --ink:#eceae4;
+      --ink-dim:#a7a9ae;
+      --ink-faint:#797c82;
+      --accent:#7f97ff;
+      --accent-ink:#c2ceff;
+      --line:#2c2e34;
+      --good:#7fd8a4;
+      --good-bg:#16241c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#15161a;
+    --surface:#1c1e23;
+    --ink:#eceae4;
+    --ink-dim:#a7a9ae;
+    --ink-faint:#797c82;
+    --accent:#7f97ff;
+    --accent-ink:#c2ceff;
+    --line:#2c2e34;
+    --good:#7fd8a4;
+    --good-bg:#16241c;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Public Sans', system-ui, sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:64px 24px 96px;}
+
+  .eyebrow{
+    font:600 11px/1 'Public Sans', sans-serif;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent-ink);
+    margin-bottom:14px;
+  }
+  h1{
+    font:500 34px/1.2 'Newsreader', Georgia, serif;
+    letter-spacing:-.01em;
+    margin:0 0 8px;
+    text-wrap:balance;
+  }
+  .updated{
+    font-size:13px; color:var(--ink-faint);
+    font-variant-numeric:tabular-nums;
+    margin:0 0 40px;
+  }
+
+  h2{
+    font:500 21px/1.3 'Newsreader', Georgia, serif;
+    margin:44px 0 12px;
+  }
+  p{color:var(--ink-dim); font-size:15.5px; margin:0 0 14px; max-width:38em;}
+  ul{margin:0 0 14px; padding-left:20px; color:var(--ink-dim); font-size:15.5px;}
+  li{margin-bottom:6px;}
+  code{
+    font:500 13px/1 'JetBrains Mono', monospace;
+    background:var(--surface); border:1px solid var(--line);
+    padding:2px 6px; border-radius:3px; color:var(--ink);
+  }
+
+  .scope-card{
+    display:flex; align-items:center; gap:14px;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px; margin:20px 0 28px;
+  }
+  .scope-badge{
+    flex:none; font:600 11px/1 'Public Sans', sans-serif; letter-spacing:.04em;
+    color:var(--good); background:var(--good-bg);
+    padding:6px 10px; border-radius:20px;
+  }
+  .scope-card div p{margin:0; font-size:14px;}
+  .scope-card code{font-size:12.5px;}
+
+  .divider{border:0; border-top:1px solid var(--line); margin:44px 0;}
+  a{color:var(--accent); text-decoration-color:color-mix(in srgb, var(--accent) 40%, transparent);}
+  a:hover{text-decoration-color:var(--accent);}
+
+  footer{
+    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    font-size:13px; color:var(--ink-faint);
+  }
+  footer a{color:var(--ink-dim);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">A.R.I Kalender</div>
+  <h1>Datenschutzerklärung</h1>
+  <p class="updated">Stand: 4. September 2026</p>
+
+  <p>
+    A.R.I ist ein persönliches Assistenz-Programm, das ausschließlich lokal auf
+    dem Rechner seines einen Entwicklers und Nutzers läuft. Diese Erklärung
+    beschreibt, wie die Google-Kalender-Anbindung dieses Programms mit Daten
+    umgeht.
+  </p>
+
+  <div class="scope-card">
+    <span class="scope-badge">1 Konto</span>
+    <div>
+      <p>Angefragte Berechtigung: <code>calendar.events</code></p>
+      <p>Termine im primären Kalender ansehen und anlegen.</p>
+    </div>
+  </div>
+
+  <h2>Welche Daten gelesen werden</h2>
+  <p>Über die Google Calendar API werden ausschließlich Titel, Start-/Endzeit
+     und Ort der Termine im primären Kalender des Nutzers abgerufen — auf
+     Zuruf legt A.R.I nach demselben Muster neue Termine an.</p>
+
+  <h2>Wie die Daten verwendet werden</h2>
+  <p>Einzig, um anstehende Termine im eigenen Dashboard des Nutzers
+     anzuzeigen und um neue Termine auf ausdrücklichen Wunsch einzutragen.
+     Es findet keine weitere Auswertung statt.</p>
+
+  <h2>Wo die Daten gespeichert werden</h2>
+  <ul>
+    <li>Der Zugangs-Token liegt ausschließlich lokal auf dem eigenen Rechner des Nutzers.</li>
+    <li>Kalenderdaten selbst werden nicht dauerhaft gespeichert, sondern bei jedem Abruf neu von Google geladen.</li>
+    <li>Nichts wird an einen Server eines Drittanbieters, eine Cloud oder einen Analyse-/Werbedienst übertragen.</li>
+  </ul>
+
+  <h2>Weitergabe an Dritte</h2>
+  <p>Findet nicht statt. Es gibt keine anderen Nutzer, keinen Verkauf, keine
+     Analyse- oder Werbe-Integrationen.</p>
+
+  <h2>Zugriff widerrufen</h2>
+  <p>
+    Der Zugriff kann jederzeit über die
+    <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google-Kontoberechtigungen</a>
+    entzogen werden. Der lokal gespeicherte Zugangs-Token wird dabei ungültig
+    und kann zusätzlich manuell vom Rechner des Nutzers gelöscht werden.
+  </p>
+
+  <hr class="divider">
+
+  <footer>
+    <span>A.R.I Kalender · Einzelnutzer-Anwendung</span>
+    <a href="https://kingshadow1332.github.io/">Startseite</a>
+  </footer>
+</div>
+</body>
+</html>

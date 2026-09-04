@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A.R.I Kalender</title>
+<meta name="description" content="Private Kalender-Anbindung für den persönlichen A.R.I-Assistenten.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf9f6;
+    --surface:#ffffff;
+    --ink:#1c1e22;
+    --ink-dim:#565a61;
+    --ink-faint:#8a8e95;
+    --accent:#3457d5;
+    --accent-ink:#22377f;
+    --line:#e5e2db;
+    --radius:3px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#15161a;
+      --surface:#1c1e23;
+      --ink:#eceae4;
+      --ink-dim:#a7a9ae;
+      --ink-faint:#797c82;
+      --accent:#7f97ff;
+      --accent-ink:#c2ceff;
+      --line:#2c2e34;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#15161a;
+    --surface:#1c1e23;
+    --ink:#eceae4;
+    --ink-dim:#a7a9ae;
+    --ink-faint:#797c82;
+    --accent:#7f97ff;
+    --accent-ink:#c2ceff;
+    --line:#2c2e34;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Public Sans', system-ui, sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:64px 24px 96px;}
+
+  .eyebrow{
+    font:600 11px/1 'Public Sans', sans-serif;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent-ink);
+    margin-bottom:14px;
+  }
+  h1{
+    font:500 40px/1.15 'Newsreader', Georgia, serif;
+    letter-spacing:-.01em;
+    margin:0 0 18px;
+    text-wrap:balance;
+  }
+  .lede{
+    font-size:18px;
+    color:var(--ink-dim);
+    margin:0 0 40px;
+    max-width:38em;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px 28px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font:600 13px/1 'Public Sans', sans-serif;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 10px;
+  }
+  .card p{margin:0; color:var(--ink-dim); font-size:15px;}
+  .card p + p{margin-top:10px;}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:40px;}
+  @media (max-width:520px){ .grid{grid-template-columns:1fr;} }
+
+  .divider{border:0; border-top:1px solid var(--line); margin:44px 0;}
+
+  a{color:var(--accent); text-decoration-color:color-mix(in srgb, var(--accent) 40%, transparent);}
+  a:hover{text-decoration-color:var(--accent);}
+
+  footer{
+    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    font-size:13px; color:var(--ink-faint);
+  }
+  footer a{color:var(--ink-dim);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Persönliches Projekt</div>
+  <h1>A.R.I Kalender</h1>
+  <p class="lede">
+    A.R.I ist ein privater Assistent, der lokal auf dem eigenen Rechner seines
+    Entwicklers läuft. Diese Seite betrifft ausschließlich die Kalender-Anbindung:
+    A.R.I liest bevorstehende Termine aus einem einzelnen persönlichen
+    Google-Kalender und kann auf Zuruf neue Termine eintragen.
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Was es ist</h2>
+      <p>Ein Hobby-Werkzeug für eine einzelne Person — kein öffentlicher Dienst, keine Registrierung, keine anderen Nutzer.</p>
+    </div>
+    <div class="card">
+      <h2>Was es tut</h2>
+      <p>Zeigt anstehende Termine an und legt neue an, wenn der Entwickler es per Sprache oder Text verlangt.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p style="color:var(--ink-dim); font-size:15px;">
+    Details zu Daten, Speicherung und Widerruf stehen in der
+    <a href="https://kingshadow1332.github.io/privacy.html">Datenschutzerklärung</a>.
+  </p>
+
+  <hr class="divider">
+
+  <footer>
+    <span>A.R.I Kalender · Einzelnutzer-Anwendung</span>
+    <a href="https://kingshadow1332.github.io/privacy.html">Datenschutzerklärung</a>
+  </footer>
+</div>
+</body>
+</html>
