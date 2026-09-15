@@ -10,29 +10,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0712;
-    --surface:#150f22;
-    --surface-2:#1c1530;
-    --ink:#f3eef8;
-    --ink-dim:#a89bc0;
-    --ink-faint:#6d5f8a;
-    --magenta:#ff3d8a;
-    --magenta-soft:rgba(255,61,138,.2);
-    --cyan:#3ee6f0;
-    --cyan-soft:rgba(62,230,240,.2);
-    --line:rgba(168,155,192,.16);
+    --bg:#0c0705;
+    --surface:#1b100b;
+    --surface-2:#241610;
+    --ink:#fbe8db;
+    --ink-dim:#c9a48d;
+    --ink-faint:#8a6553;
+    --magenta:#ff5a2e;
+    --magenta-soft:rgba(255,90,46,.22);
+    --cyan:#ffb454;
+    --cyan-soft:rgba(255,180,84,.2);
+    --good:#5fd67a;
+    --line:rgba(201,164,141,.16);
     --radius:20px;
   }
 
   *{box-sizing:border-box}
-  ::selection{background:var(--magenta); color:#1a0510;}
+  ::selection{background:var(--magenta); color:#210b02;}
 
   html, body{height:100%;}
   body{
     margin:0;
     background:
-      radial-gradient(ellipse 800px 460px at 80% -10%, rgba(255,61,138,.10), transparent 60%),
-      radial-gradient(ellipse 700px 420px at 10% 110%, rgba(62,230,240,.08), transparent 60%),
+      radial-gradient(ellipse 800px 460px at 80% -10%, rgba(255,90,46,.12), transparent 60%),
+      radial-gradient(ellipse 700px 420px at 10% 110%, rgba(255,180,84,.08), transparent 60%),
       var(--bg);
     color:var(--ink);
     font-family:'IBM Plex Sans', system-ui, sans-serif;
@@ -137,9 +138,13 @@
     font-size:12.5px;
   }
   .task:last-child{border-bottom:none;}
+  .task-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
   .task .name{display:flex; align-items:center; gap:8px; color:var(--ink);}
   .task .name .bullet{width:5px; height:5px; border-radius:50%; background:var(--cyan); flex:none;}
   .task .state{font:500 10px/1 'JetBrains Mono', monospace; color:var(--cyan); letter-spacing:.04em;}
+  .task .bar{height:3px; border-radius:3px; background:var(--surface-2); margin-top:7px; overflow:hidden;}
+  .task .bar span{display:block; height:100%; border-radius:3px; background:linear-gradient(90deg, var(--magenta), var(--cyan)); animation:barin 1s cubic-bezier(.2,.8,.2,1) both;}
+  @keyframes barin{ from{ width:0; } }
 
   /* ---- log ---- */
   .log{
@@ -171,23 +176,48 @@
     margin-bottom:6px;
     animation:rise .7s .05s cubic-bezier(.2,.8,.2,1) both;
   }
-  .orbit-ring{
-    position:absolute; left:50%; top:50%; border-radius:50%;
-    border:1px solid transparent;
-    transform:translate(-50%,-50%) rotate(-18deg);
-  }
-  .orbit-ring.r1{ width:230px; height:96px; border-top-color:color-mix(in srgb, var(--magenta) 65%, transparent); border-bottom-color:color-mix(in srgb, var(--cyan) 45%, transparent); animation:spin 26s linear infinite; }
-  .orbit-ring.r2{ width:190px; height:76px; border-top-color:color-mix(in srgb, var(--cyan) 55%, transparent); border-bottom-color:transparent; animation:spin 18s linear infinite reverse; }
-  @keyframes spin{ to{ transform:translate(-50%,-50%) rotate(342deg); } }
-  .planet{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:112px; height:112px; border-radius:50%;
-    background:radial-gradient(circle at 32% 28%, #ffffff55, transparent 40%),
-               radial-gradient(circle at 65% 70%, var(--cyan), var(--magenta) 70%);
-    box-shadow:0 0 60px -8px var(--magenta-soft), 0 0 90px -14px var(--cyan-soft);
+  .globe{
+    position:absolute; inset:14px; border-radius:50%;
+    background:radial-gradient(circle at 34% 30%, rgba(255,180,84,.35), transparent 55%), var(--surface-2);
+    box-shadow:0 0 60px -10px var(--magenta-soft), 0 0 90px -16px var(--cyan-soft), inset 0 0 40px -12px #000;
     animation:float 5s ease-in-out infinite;
+    overflow:hidden;
   }
-  @keyframes float{ 0%,100%{ transform:translate(-50%,-52%); } 50%{ transform:translate(-50%,-58%); } }
+  .globe .mesh{
+    position:absolute; inset:0;
+    animation:spin 34s linear infinite;
+  }
+  .globe .meridian{
+    position:absolute; left:50%; top:0; height:100%; width:100%;
+    border:1px solid color-mix(in srgb, var(--magenta) 55%, transparent);
+    border-radius:50%;
+    transform-origin:center;
+  }
+  .globe .meridian:nth-child(1){ transform:translateX(-50%) scaleX(1); }
+  .globe .meridian:nth-child(2){ transform:translateX(-50%) scaleX(.62); border-color:color-mix(in srgb, var(--cyan) 45%, transparent); }
+  .globe .meridian:nth-child(3){ transform:translateX(-50%) scaleX(.2); border-color:color-mix(in srgb, var(--magenta) 35%, transparent); }
+  .globe .latitude{
+    position:absolute; left:0; top:50%; width:100%; height:100%;
+    border:1px solid color-mix(in srgb, var(--cyan) 40%, transparent);
+    border-radius:50%;
+    transform-origin:center;
+  }
+  .globe .latitude:nth-child(4){ transform:translateY(-50%) scaleY(.5); }
+  .globe .latitude:nth-child(5){ transform:translateY(-50%) scaleY(.85); border-color:color-mix(in srgb, var(--magenta) 30%, transparent); }
+  .globe .core{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:26%; height:26%; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff8, transparent 45%), var(--magenta);
+    box-shadow:0 0 30px 4px var(--magenta-soft);
+  }
+  .globe .sweep{
+    position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 0deg, transparent 0 60%, color-mix(in srgb, var(--cyan) 55%, transparent) 78%, transparent 92%);
+    animation:spin 4.5s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @keyframes float{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
 
   .hub h1{
     font-family:'Orbitron', sans-serif; font-weight:700; font-size:clamp(24px,4.2vw,32px);
@@ -263,9 +293,10 @@
   @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
 
   @media (prefers-reduced-motion: reduce){
-    .dot, .ring, .orbit-ring, .planet, .caret{ animation:none; }
+    .dot, .ring, .globe, .mesh, .sweep, .caret, .task .bar span{ animation:none; }
     .topbar, .panel, .orbit-stage, .grid2{ animation:none; opacity:1; transform:none; }
     .log div{ animation:none; opacity:1; }
+    .task .bar span{ width:100% !important; }
   }
 </style>
 </head>
@@ -311,10 +342,10 @@
       <div class="panel">
         <h3><span class="ico"></span>Aktive Dienste</h3>
         <div class="tasklist">
-          <div class="task"><span class="name"><span class="bullet"></span>Terminübersicht</span><span class="state">AKTIV</span></div>
-          <div class="task"><span class="name"><span class="bullet"></span>Spracherkennung</span><span class="state">BEREIT</span></div>
-          <div class="task"><span class="name"><span class="bullet"></span>Kalender-Sync</span><span class="state">AKTIV</span></div>
-          <div class="task"><span class="name"><span class="bullet"></span>Benachrichtigungen</span><span class="state">AKTIV</span></div>
+          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Terminübersicht</span><span class="state">AKTIV</span></div><div class="bar"><span style="width:92%"></span></div></div>
+          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Spracherkennung</span><span class="state">BEREIT</span></div><div class="bar"><span style="width:64%"></span></div></div>
+          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Kalender-Sync</span><span class="state">AKTIV</span></div><div class="bar"><span style="width:100%"></span></div></div>
+          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Benachrichtigungen</span><span class="state">AKTIV</span></div><div class="bar"><span style="width:78%"></span></div></div>
         </div>
       </div>
 
@@ -331,9 +362,17 @@
     <div class="col">
       <div class="hub">
         <div class="orbit-stage">
-          <div class="orbit-ring r1"></div>
-          <div class="orbit-ring r2"></div>
-          <div class="planet"></div>
+          <div class="globe">
+            <div class="mesh">
+              <div class="meridian"></div>
+              <div class="meridian"></div>
+              <div class="meridian"></div>
+              <div class="latitude"></div>
+              <div class="latitude"></div>
+            </div>
+            <div class="sweep"></div>
+            <div class="core"></div>
+          </div>
         </div>
         <h1>A.R.I</h1>
         <p class="sub">System Online</p>
