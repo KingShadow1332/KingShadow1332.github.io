@@ -10,18 +10,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0c0705;
-    --surface:#1b100b;
-    --surface-2:#241610;
-    --ink:#fbe8db;
-    --ink-dim:#c9a48d;
-    --ink-faint:#8a6553;
-    --magenta:#ff5a2e;
-    --magenta-soft:rgba(255,90,46,.22);
-    --cyan:#ffb454;
-    --cyan-soft:rgba(255,180,84,.2);
+    --bg:#0a0712;
+    --surface:#150f22;
+    --surface-2:#1c1530;
+    --ink:#f3eef8;
+    --ink-dim:#a89bc0;
+    --ink-faint:#6d5f8a;
+    --magenta:#ff3d8a;
+    --magenta-soft:rgba(255,61,138,.22);
+    --cyan:#3ee6f0;
+    --cyan-soft:rgba(62,230,240,.2);
     --good:#5fd67a;
-    --line:rgba(201,164,141,.16);
+    --line:rgba(168,155,192,.16);
     --radius:20px;
   }
 
@@ -52,8 +52,8 @@
     border-radius:26px;
     border:1px solid var(--line);
     background:
-      radial-gradient(ellipse 700px 420px at 82% -6%, rgba(255,90,46,.14), transparent 62%),
-      radial-gradient(ellipse 620px 380px at 6% 108%, rgba(255,180,84,.09), transparent 62%),
+      radial-gradient(ellipse 700px 420px at 82% -6%, rgba(255,61,138,.14), transparent 62%),
+      radial-gradient(ellipse 620px 380px at 6% 108%, rgba(62,230,240,.09), transparent 62%),
       var(--surface);
     box-shadow:0 40px 100px -40px #000, inset 0 0 0 1px rgba(0,0,0,.4), 0 0 0 6px #050302;
     display:flex; flex-direction:column;
@@ -214,48 +214,23 @@
     margin-bottom:2px;
     animation:rise .7s .05s cubic-bezier(.2,.8,.2,1) both;
   }
-  .globe{
-    position:absolute; inset:14px; border-radius:50%;
-    background:radial-gradient(circle at 34% 30%, rgba(255,180,84,.35), transparent 55%), var(--surface-2);
-    box-shadow:0 0 60px -10px var(--magenta-soft), 0 0 90px -16px var(--cyan-soft), inset 0 0 40px -12px #000;
-    animation:float 5s ease-in-out infinite;
-    overflow:hidden;
+  .orbit-ring{
+    position:absolute; left:50%; top:50%; border-radius:50%;
+    border:1px solid transparent;
+    transform:translate(-50%,-50%) rotate(-18deg);
   }
-  .globe .mesh{
-    position:absolute; inset:0;
-    animation:spin 34s linear infinite;
-  }
-  .globe .meridian{
-    position:absolute; left:50%; top:0; height:100%; width:100%;
-    border:1px solid color-mix(in srgb, var(--magenta) 55%, transparent);
-    border-radius:50%;
-    transform-origin:center;
-  }
-  .globe .meridian:nth-child(1){ transform:translateX(-50%) scaleX(1); }
-  .globe .meridian:nth-child(2){ transform:translateX(-50%) scaleX(.62); border-color:color-mix(in srgb, var(--cyan) 45%, transparent); }
-  .globe .meridian:nth-child(3){ transform:translateX(-50%) scaleX(.2); border-color:color-mix(in srgb, var(--magenta) 35%, transparent); }
-  .globe .latitude{
-    position:absolute; left:0; top:50%; width:100%; height:100%;
-    border:1px solid color-mix(in srgb, var(--cyan) 40%, transparent);
-    border-radius:50%;
-    transform-origin:center;
-  }
-  .globe .latitude:nth-child(4){ transform:translateY(-50%) scaleY(.5); }
-  .globe .latitude:nth-child(5){ transform:translateY(-50%) scaleY(.85); border-color:color-mix(in srgb, var(--magenta) 30%, transparent); }
-  .globe .core{
+  .orbit-ring.r1{ width:182px; height:76px; border-top-color:color-mix(in srgb, var(--magenta) 65%, transparent); border-bottom-color:color-mix(in srgb, var(--cyan) 45%, transparent); animation:spin 26s linear infinite; }
+  .orbit-ring.r2{ width:150px; height:60px; border-top-color:color-mix(in srgb, var(--cyan) 55%, transparent); border-bottom-color:transparent; animation:spin 18s linear infinite reverse; }
+  @keyframes spin{ to{ transform:translate(-50%,-50%) rotate(342deg); } }
+  .planet{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:26%; height:26%; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #fff8, transparent 45%), var(--magenta);
-    box-shadow:0 0 30px 4px var(--magenta-soft);
+    width:88px; height:88px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #ffffff55, transparent 40%),
+               radial-gradient(circle at 65% 70%, var(--cyan), var(--magenta) 70%);
+    box-shadow:0 0 60px -8px var(--magenta-soft), 0 0 90px -14px var(--cyan-soft);
+    animation:float 5s ease-in-out infinite;
   }
-  .globe .sweep{
-    position:absolute; inset:0; border-radius:50%;
-    background:conic-gradient(from 0deg, transparent 0 60%, color-mix(in srgb, var(--cyan) 55%, transparent) 78%, transparent 92%);
-    animation:spin 4.5s linear infinite;
-    mix-blend-mode:screen;
-  }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
-  @keyframes float{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+  @keyframes float{ 0%,100%{ transform:translate(-50%,-52%); } 50%{ transform:translate(-50%,-58%); } }
 
   .hub h1{
     font-family:'Orbitron', sans-serif; font-weight:700; font-size:clamp(20px,3.6vw,26px);
@@ -331,7 +306,7 @@
   @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
 
   @media (prefers-reduced-motion: reduce){
-    .dot, .ring, .globe, .mesh, .sweep, .caret, .task .bar span{ animation:none; }
+    .dot, .ring, .orbit-ring, .planet, .caret, .task .bar span{ animation:none; }
     .topbar, .panel, .orbit-stage, .grid2{ animation:none; opacity:1; transform:none; }
     .log div{ animation:none; opacity:1; }
     .task .bar span{ width:100% !important; }
@@ -401,17 +376,9 @@
     <div class="col">
       <div class="hub">
         <div class="orbit-stage">
-          <div class="globe">
-            <div class="mesh">
-              <div class="meridian"></div>
-              <div class="meridian"></div>
-              <div class="meridian"></div>
-              <div class="latitude"></div>
-              <div class="latitude"></div>
-            </div>
-            <div class="sweep"></div>
-            <div class="core"></div>
-          </div>
+          <div class="orbit-ring r1"></div>
+          <div class="orbit-ring r2"></div>
+          <div class="planet"></div>
         </div>
         <h1>A.R.I</h1>
         <p class="sub">System Online</p>
