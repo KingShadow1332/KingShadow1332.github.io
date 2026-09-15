@@ -7,326 +7,329 @@
 <meta name="description" content="Private Kalender-Anbindung für den persönlichen A.R.I-Assistenten.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0712;
-    --surface:#150f22;
-    --surface-2:#1c1530;
-    --ink:#f3eef8;
-    --ink-dim:#a89bc0;
-    --ink-faint:#6d5f8a;
-    --magenta:#ff3d8a;
-    --magenta-soft:rgba(255,61,138,.22);
-    --cyan:#3ee6f0;
-    --cyan-soft:rgba(62,230,240,.2);
-    --good:#5fd67a;
-    --line:rgba(168,155,192,.16);
-    --radius:20px;
+    --bg:#0a0710;
+    --surface:#130d1e;
+    --surface-2:#190f22;
+    --ink:#f2edf7;
+    --ink-dim:#9a8db3;
+    --ink-faint:#5f5578;
+    --pink:#ff3d7a;
+    --pink-soft:rgba(255,61,122,.22);
+    --cyan:#37d9ec;
+    --cyan-soft:rgba(55,217,236,.2);
+    --line:rgba(154,141,179,.14);
   }
 
   *{box-sizing:border-box}
-  ::selection{background:var(--magenta); color:#210b02;}
+  ::selection{background:var(--pink); color:#1a0511;}
 
   html, body{height:100%;}
   body{
     margin:0;
-    background:var(--bg);
+    background:
+      radial-gradient(ellipse 70% 50% at 78% -8%, rgba(255,61,122,.10), transparent 60%),
+      radial-gradient(ellipse 60% 45% at 20% 108%, rgba(55,217,236,.08), transparent 60%),
+      var(--bg);
     color:var(--ink);
-    font-family:'IBM Plex Sans', system-ui, sans-serif;
-    line-height:1.6;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    line-height:1.5;
     -webkit-font-smoothing:antialiased;
     overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:18px;
-  }
-  .mono{font-family:'JetBrains Mono', ui-monospace, monospace;}
-
-  /* ============ DEVICE SCREEN ============ */
-  .screen{
-    position:relative;
-    width:min(1320px, 100%);
-    height:min(840px, 100%);
-    border-radius:26px;
-    border:1px solid var(--line);
-    background:
-      radial-gradient(ellipse 700px 420px at 82% -6%, rgba(255,61,138,.14), transparent 62%),
-      radial-gradient(ellipse 620px 380px at 6% 108%, rgba(62,230,240,.09), transparent 62%),
-      var(--surface);
-    box-shadow:0 40px 100px -40px #000, inset 0 0 0 1px rgba(0,0,0,.4), 0 0 0 6px #050302;
-    display:flex; flex-direction:column;
-    padding:16px;
-    gap:14px;
-    overflow:hidden;
-  }
-  .screen::after{
-    content:"";
-    position:absolute; inset:0; border-radius:26px; pointer-events:none;
-    background:radial-gradient(ellipse at 50% 0%, transparent 55%, rgba(0,0,0,.5) 130%);
-    mix-blend-mode:multiply;
-  }
-  .shell{
-    display:flex; flex-direction:column; gap:14px;
-    min-height:0; flex:1;
+    padding:12px;
+    height:100%;
+    display:flex; flex-direction:column; gap:10px;
   }
 
   /* ============ TOP BAR ============ */
   .topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    gap:16px; flex-wrap:wrap;
-    padding:11px 20px;
-    border-radius:999px;
-    background:var(--surface-2);
+    display:flex; align-items:center; justify-content:space-between; gap:18px;
+    padding:10px 20px;
+    border-radius:12px;
+    background:var(--surface);
     border:1px solid var(--line);
     flex:none;
-    animation:rise .6s cubic-bezier(.2,.8,.2,1) both;
   }
-  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand{display:flex; flex-direction:column; gap:2px;}
   .brand .logo{
-    font-family:'Orbitron', sans-serif; font-weight:800; font-size:20px;
-    letter-spacing:.06em;
-    background:linear-gradient(90deg, var(--magenta), var(--cyan));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
+    font-family:'Orbitron', sans-serif; font-weight:800; font-size:19px; letter-spacing:.05em;
+    color:var(--pink);
+    text-shadow:0 0 18px var(--pink-soft);
   }
-  .brand .tag{
-    font:500 9.5px/1 'JetBrains Mono', monospace;
-    letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
-  }
+  .brand .tag{font-size:8.5px; letter-spacing:.14em; color:var(--ink-faint);}
   .ver{
-    font:500 10px/1 'JetBrains Mono', monospace; color:var(--ink-dim);
-    border:1px solid var(--line); border-radius:999px; padding:5px 10px;
+    font-size:10px; color:var(--ink-dim);
+    border:1px solid var(--line); border-radius:6px; padding:4px 9px;
+    margin-left:10px;
   }
-  .status-live{display:flex; align-items:center; gap:8px; font:500 12px/1 'JetBrains Mono', monospace; letter-spacing:.06em;}
-  .status-live b{color:var(--cyan); font-weight:600;}
+  .brand-row{display:flex; align-items:center;}
+
+  .status-live{display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .status-live .l1{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; letter-spacing:.08em; color:var(--pink);}
+  .status-live .l2{font-size:8.5px; letter-spacing:.1em; color:var(--cyan);}
   .dot{width:7px; height:7px; border-radius:50%; background:var(--cyan); flex:none;
     box-shadow:0 0 0 0 var(--cyan-soft); animation:pulse 2.2s ease-out infinite;}
   @keyframes pulse{
-    0%{ box-shadow:0 0 0 0 rgba(62,230,240,.45); }
-    70%{ box-shadow:0 0 0 8px rgba(62,230,240,0); }
-    100%{ box-shadow:0 0 0 0 rgba(62,230,240,0); }
+    0%{ box-shadow:0 0 0 0 rgba(55,217,236,.45); }
+    70%{ box-shadow:0 0 0 8px rgba(55,217,236,0); }
+    100%{ box-shadow:0 0 0 0 rgba(55,217,236,0); }
   }
-  .clock{
-    display:flex; align-items:center; gap:10px;
-    font:500 13px/1 'JetBrains Mono', monospace; color:var(--ink);
-    font-variant-numeric:tabular-nums;
+
+  .topbar-right{display:flex; align-items:center; gap:14px;}
+  .icon-row{display:flex; gap:6px;}
+  .icon-btn{
+    width:26px; height:26px; border-radius:7px; display:grid; place-items:center;
+    background:var(--surface-2); border:1px solid var(--line); color:var(--ink-faint); font-size:11px;
   }
-  .clock .date{color:var(--ink-faint); font-size:10.5px;}
+  .clock-block{text-align:right;}
+  .clock-block .t{font-size:17px; font-weight:700; color:var(--pink); font-variant-numeric:tabular-nums;}
+  .clock-block .d{font-size:9px; color:var(--ink-faint);}
   .avatar{
-    width:30px; height:30px; border-radius:50%; flex:none;
-    background:conic-gradient(from 180deg, var(--magenta), var(--cyan), var(--magenta));
-    box-shadow:0 0 14px -2px var(--magenta-soft);
+    position:relative; width:28px; height:28px; border-radius:50%; flex:none;
+    background:conic-gradient(from 180deg, var(--pink), var(--cyan), var(--pink));
   }
+  .avatar::after{content:""; position:absolute; top:-1px; right:-1px; width:7px; height:7px; border-radius:50%; background:var(--pink); border:2px solid var(--surface);}
 
   /* ============ LAYOUT ============ */
-  .board{
-    display:grid; grid-template-columns:250px 1fr 270px; gap:14px;
-    flex:1; min-height:0;
-  }
-  @media (max-width:980px){ .board{grid-template-columns:1fr; overflow-y:auto;} }
+  .board{display:grid; grid-template-columns:280px 1fr 300px; gap:10px; flex:1; min-height:0;}
+  @media (max-width:1000px){ .board{grid-template-columns:1fr; overflow-y:auto;} }
 
-  .col{
-    display:flex; flex-direction:column; gap:12px;
-    min-height:0; overflow-y:auto;
-    scrollbar-width:thin;
-    padding-right:2px;
-  }
-  .col::-webkit-scrollbar{width:5px;}
+  .col{display:flex; flex-direction:column; gap:10px; min-height:0; overflow-y:auto; scrollbar-width:thin;}
+  .col::-webkit-scrollbar{width:4px;}
   .col::-webkit-scrollbar-thumb{background:var(--line); border-radius:3px;}
 
   .panel{
-    background:var(--surface-2);
+    background:var(--surface);
     border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:16px 18px 18px;
+    border-radius:12px;
+    padding:14px 16px 16px;
     flex:none;
-    animation:rise .6s .05s cubic-bezier(.2,.8,.2,1) both;
   }
   .panel h3{
-    display:flex; align-items:center; gap:8px;
-    font:600 11px/1 'JetBrains Mono', monospace;
-    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint);
-    margin:0 0 16px;
+    display:flex; align-items:center; gap:7px;
+    font:600 10px/1 'JetBrains Mono', monospace;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim);
+    margin:0 0 12px;
   }
-  .panel h3 .ico{width:6px; height:6px; border-radius:50%; background:var(--magenta); flex:none;}
+  .panel h3 .ico{color:var(--pink); font-size:11px;}
+  .panel h3 .right{margin-left:auto; color:var(--ink-faint); font-weight:500; letter-spacing:.04em;}
 
-  /* ---- status rings ---- */
-  .rings{display:flex; justify-content:space-between; gap:10px; margin-bottom:16px;}
-  .ring-item{display:flex; flex-direction:column; align-items:center; gap:8px; flex:1;}
-  .ring{
-    position:relative; width:64px; height:64px; border-radius:50%;
+  /* ---- gauges ---- */
+  .gauges{display:flex; justify-content:space-between; gap:8px; margin-bottom:12px;}
+  .gauge-item{display:flex; flex-direction:column; align-items:center; gap:6px; flex:1;}
+  .gauge{
+    position:relative; width:62px; height:62px; border-radius:50%;
     display:grid; place-items:center;
-    background:conic-gradient(var(--ring-color, var(--magenta)) 0 var(--pct,100%), var(--surface-2) var(--pct,100%) 100%);
-    animation:ringin 1.1s cubic-bezier(.2,.8,.2,1) both;
+    background:conic-gradient(var(--g-color, var(--pink)) 0 var(--g-pct,50%), var(--surface-2) var(--g-pct,50%) 100%);
   }
-  .ring::before{
-    content:""; position:absolute; inset:6px; border-radius:50%; background:var(--surface);
-  }
-  .ring span{position:relative; font:600 11px/1 'JetBrains Mono', monospace; color:var(--ink);}
-  @keyframes ringin{ from{ filter:brightness(2.4); } to{ filter:brightness(1); } }
-  .ring-label{font:500 10px/1.3 'JetBrains Mono', monospace; letter-spacing:.02em; color:var(--ink-dim); text-align:center;}
+  .gauge::before{ content:""; position:absolute; inset:6px; border-radius:50%; background:var(--surface); }
+  .gauge b{position:relative; font-size:13px; color:var(--g-color, var(--pink));}
+  .gauge b i{font-size:8px; font-style:normal;}
+  .gauge-sub{font-size:8px; color:var(--ink-faint); text-align:center;}
 
-  /* ---- task list ---- */
-  .tasklist{display:flex; flex-direction:column; gap:2px;}
-  .task{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:10px 4px;
-    border-bottom:1px solid var(--line);
-    font-size:12.5px;
+  .sparks{display:flex; justify-content:space-between; gap:8px; margin-bottom:12px;}
+  .sparks svg{width:100%; height:26px; display:block;}
+
+  .statboxes{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  .statbox{background:var(--surface-2); border-radius:8px; padding:8px 9px;}
+  .statbox .lbl{font-size:7.5px; letter-spacing:.06em; color:var(--ink-faint); margin-bottom:4px;}
+  .statbox .val{font-size:11.5px; color:var(--ink); font-weight:600;}
+  .statbox .val.up{color:var(--cyan);}
+  .statbox .val.dn{color:var(--pink);}
+
+  /* ---- task table ---- */
+  table.tasks{width:100%; border-collapse:collapse; font-size:10.5px;}
+  table.tasks th{
+    text-align:left; font-size:8px; letter-spacing:.06em; color:var(--ink-faint); font-weight:500;
+    padding-bottom:6px; border-bottom:1px solid var(--line);
   }
-  .task:last-child{border-bottom:none;}
-  .task-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
-  .task .name{display:flex; align-items:center; gap:8px; color:var(--ink);}
-  .task .name .bullet{width:5px; height:5px; border-radius:50%; background:var(--cyan); flex:none;}
-  .task .state{font:500 10px/1 'JetBrains Mono', monospace; color:var(--cyan); letter-spacing:.04em;}
-  .task .bar{height:3px; border-radius:3px; background:var(--surface-2); margin-top:7px; overflow:hidden;}
-  .task .bar span{display:block; height:100%; border-radius:3px; background:linear-gradient(90deg, var(--magenta), var(--cyan)); animation:barin 1s cubic-bezier(.2,.8,.2,1) both;}
-  @keyframes barin{ from{ width:0; } }
+  table.tasks td{padding:6px 2px; border-bottom:1px solid var(--line); color:var(--ink-dim);}
+  table.tasks tr:last-child td{border-bottom:none;}
+  table.tasks td.name{color:var(--ink); display:flex; align-items:center; gap:6px;}
+  table.tasks td.name .b{width:5px; height:5px; border-radius:50%; background:var(--cyan); flex:none;}
+  table.tasks td.state{color:var(--cyan); font-weight:600; font-size:9px;}
 
   /* ---- log ---- */
   .log{
-    background:var(--surface-2); border-radius:14px;
-    padding:10px 12px; height:110px; overflow:hidden;
-    font:400 11.5px/1.9 'JetBrains Mono', monospace;
-    color:var(--ink-faint);
+    background:var(--surface-2); border-radius:8px;
+    padding:9px 11px; height:112px; overflow:hidden;
+    font-size:10px; line-height:1.8; color:var(--ink-faint);
     display:flex; flex-direction:column-reverse;
   }
   .log div{opacity:0; animation:logline .4s ease forwards;}
-  .log .t{color:var(--ink-faint); opacity:.7;}
+  .log .t{opacity:.6;}
   .log .m{color:var(--ink-dim);}
   @keyframes logline{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:translateY(0);} }
   .cmdline{
-    display:flex; align-items:center; gap:8px; margin-top:10px;
-    padding:9px 12px; border-radius:12px; background:var(--surface-2);
-    font:500 12px/1 'JetBrains Mono', monospace; color:var(--ink-faint);
+    display:flex; align-items:center; gap:8px; margin-top:8px;
+    padding:8px 10px; border-radius:8px; background:var(--surface-2);
+    font-size:10.5px; color:var(--ink-faint);
   }
-  .caret{width:6px; height:13px; background:var(--magenta); display:inline-block; animation:blink 1s steps(1) infinite;}
+  .cmdline .caret{width:6px; height:11px; background:var(--pink); display:inline-block; animation:blink 1s steps(1) infinite; margin-left:auto;}
+  .mic{
+    width:20px; height:20px; border-radius:6px; background:var(--pink); color:#1a0511;
+    display:grid; place-items:center; font-size:8px; font-weight:700; flex:none;
+  }
   @keyframes blink{ 50%{ opacity:0; } }
 
-  /* ============ HERO / HUB ============ */
-  .hub{
+  /* ============ CENTER ============ */
+  .center-col{overflow:visible;}
+  .hero{
+    position:relative;
     display:flex; flex-direction:column; align-items:center; text-align:center;
-    padding:10px 16px 4px;
+    padding:8px 8px 4px;
+    flex:none;
   }
-  .orbit-stage{
-    position:relative; width:172px; height:172px;
-    margin-bottom:2px;
-    animation:rise .7s .05s cubic-bezier(.2,.8,.2,1) both;
-  }
+  .axis{position:absolute; font-size:9px; color:var(--ink-faint); opacity:.55; letter-spacing:.05em;}
+  .axis.a1{top:2%; left:20%;} .axis.a2{top:2%; right:12%;}
+  .axis.a3{top:44%; left:0;} .axis.a4{top:44%; right:0;}
+  .axis.a5{bottom:14%; left:22%;} .axis.a6{bottom:14%; right:10%;}
+
+  .orbit-stage{position:relative; width:150px; height:150px; margin-bottom:2px;}
   .orbit-ring{
     position:absolute; left:50%; top:50%; border-radius:50%;
     border:1px solid transparent;
     transform:translate(-50%,-50%) rotate(-18deg);
   }
-  .orbit-ring.r1{ width:182px; height:76px; border-top-color:color-mix(in srgb, var(--magenta) 65%, transparent); border-bottom-color:color-mix(in srgb, var(--cyan) 45%, transparent); animation:spin 26s linear infinite; }
-  .orbit-ring.r2{ width:150px; height:60px; border-top-color:color-mix(in srgb, var(--cyan) 55%, transparent); border-bottom-color:transparent; animation:spin 18s linear infinite reverse; }
+  .orbit-ring.r1{ width:158px; height:66px; border-top-color:color-mix(in srgb, var(--pink) 65%, transparent); border-bottom-color:color-mix(in srgb, var(--cyan) 45%, transparent); animation:spin 26s linear infinite; }
+  .orbit-ring.r2{ width:130px; height:52px; border-top-color:color-mix(in srgb, var(--cyan) 55%, transparent); border-bottom-color:transparent; animation:spin 18s linear infinite reverse; }
   @keyframes spin{ to{ transform:translate(-50%,-50%) rotate(342deg); } }
   .planet{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:88px; height:88px; border-radius:50%;
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-52%);
+    width:78px; height:78px; border-radius:50%;
     background:radial-gradient(circle at 32% 28%, #ffffff55, transparent 40%),
-               radial-gradient(circle at 65% 70%, var(--cyan), var(--magenta) 70%);
-    box-shadow:0 0 60px -8px var(--magenta-soft), 0 0 90px -14px var(--cyan-soft);
+               radial-gradient(circle at 65% 70%, var(--cyan), var(--pink) 70%);
+    box-shadow:0 0 60px -8px var(--pink-soft), 0 0 90px -14px var(--cyan-soft);
     animation:float 5s ease-in-out infinite;
   }
   @keyframes float{ 0%,100%{ transform:translate(-50%,-52%); } 50%{ transform:translate(-50%,-58%); } }
 
-  .hub h1{
-    font-family:'Orbitron', sans-serif; font-weight:700; font-size:clamp(20px,3.6vw,26px);
-    letter-spacing:.08em; margin:2px 0 4px; color:var(--ink);
+  .hero h1{
+    font-family:'Orbitron', sans-serif; font-weight:800; font-size:26px; letter-spacing:.1em;
+    margin:2px 0 2px; color:var(--pink); text-shadow:0 0 24px var(--pink-soft);
   }
-  .hub .sub{
-    font:500 10px/1 'JetBrains Mono', monospace; letter-spacing:.16em; text-transform:uppercase;
-    color:var(--cyan); margin:0 0 12px;
-  }
-  .chips{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:16px;}
-  .chip{
-    font:500 10.5px/1 'JetBrains Mono', monospace; letter-spacing:.03em;
-    padding:7px 13px; border-radius:999px; border:1px solid var(--line); color:var(--ink-dim);
-    background:var(--surface);
-  }
-  .chip b{color:var(--ink);}
+  .hero .sub{font-size:9.5px; letter-spacing:.16em; color:var(--cyan); margin:0 0 10px;}
+  .hero .say{font-size:11px; color:var(--ink-dim); margin:0 0 10px;}
 
-  .lede{color:var(--ink-dim); font-size:13.5px; max-width:34em; margin:0 auto 16px;}
-
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:4px; text-align:left;}
-  @media (max-width:600px){ .grid2{grid-template-columns:1fr;} }
-  .tile{
-    background:var(--surface); border:1px solid var(--line); border-radius:16px;
-    padding:16px 18px 18px;
-    transition:transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .3s ease;
+  .pillrow{display:flex; gap:7px; flex-wrap:wrap; justify-content:center; margin-bottom:8px;}
+  .pill{
+    font-size:9px; letter-spacing:.03em; padding:6px 11px; border-radius:999px;
+    border:1px solid var(--line); color:var(--ink-dim); background:var(--surface);
   }
-  .tile:hover{ transform:translateY(-3px); border-color:color-mix(in srgb, var(--magenta) 45%, var(--line)); box-shadow:0 14px 34px -20px var(--magenta-soft); }
-  .tile .badge{
-    width:30px; height:30px; border-radius:10px; display:grid; place-items:center;
-    background:var(--surface-2); margin-bottom:14px; font:600 12px/1 'JetBrains Mono', monospace; color:var(--magenta);
-  }
-  .tile:nth-child(2) .badge{color:var(--cyan);}
-  .tile h2{font-family:'Orbitron', sans-serif; font-weight:600; font-size:13px; letter-spacing:.03em; margin:0 0 8px; color:var(--ink);}
-  .tile p{margin:0; color:var(--ink-dim); font-size:14px;}
+  .pill b{color:var(--cyan); font-weight:600;}
+  .pill.active{background:linear-gradient(90deg, var(--pink), var(--cyan)); color:#1a0511; font-weight:700; border-color:transparent;}
 
-  /* ============ CALENDAR ============ */
-  .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
-  .cal-head .month{font:600 12.5px/1 'Orbitron', sans-serif; letter-spacing:.03em; color:var(--ink);}
-  .cal-nav{display:flex; gap:6px;}
-  .cal-nav span{width:20px; height:20px; border-radius:50%; display:grid; place-items:center; background:var(--surface-2); color:var(--ink-faint); font-size:11px;}
-  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;}
-  .cal-grid .dow{font:600 9px/1 'JetBrains Mono', monospace; color:var(--ink-faint); padding-bottom:4px; letter-spacing:.05em;}
+  /* ---- overview grid ---- */
+  .ov-panel{margin-top:8px;}
+  .ov-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .ov-tile{background:var(--surface-2); border-radius:8px; padding:9px 11px;}
+  .ov-tile .lbl{font-size:7.5px; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:3px;}
+  .ov-tile .val{font-size:15px; font-weight:700; color:var(--pink); margin-bottom:4px;}
+  .ov-tile .val.c{color:var(--cyan);}
+  .ov-tile .val i{font-size:9px; font-style:normal; color:var(--ink-faint);}
+  .ov-tile svg{width:100%; height:22px; display:block;}
+
+  .bottom-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+  .donut-wrap{display:flex; align-items:center; gap:14px;}
+  .donut{
+    position:relative; width:74px; height:74px; border-radius:50%; flex:none;
+    background:conic-gradient(var(--pink) 0 46%, var(--cyan) 46% 66%, color-mix(in srgb, var(--pink) 55%, transparent) 66% 72%, color-mix(in srgb, var(--cyan) 50%, transparent) 72% 100%);
+  }
+  .donut::before{content:""; position:absolute; inset:9px; border-radius:50%; background:var(--surface); display:grid;}
+  .donut span{position:absolute; inset:0; display:grid; place-items:center; font-size:14px; font-weight:700; color:var(--ink);}
+  .donut span i{display:block; font-size:6.5px; font-style:normal; color:var(--ink-faint); font-weight:500;}
+  .legend{display:flex; flex-direction:column; gap:5px; font-size:9.5px;}
+  .legend .row{display:flex; align-items:center; gap:6px; color:var(--ink-dim);}
+  .legend .d{width:6px; height:6px; border-radius:50%; flex:none;}
+  .legend b{margin-left:auto; color:var(--ink); font-weight:600;}
+  .legend .total{margin-top:2px; padding-top:5px; border-top:1px solid var(--line); display:flex; color:var(--ink-faint);}
+  .legend .total b{color:var(--pink);}
+
+  .net-chart svg{width:100%; height:56px; display:block; margin-bottom:8px;}
+  .net-stats{display:flex; gap:16px;}
+  .net-stats .lbl{font-size:7.5px; color:var(--ink-faint); letter-spacing:.05em;}
+  .net-stats .val{font-size:13px; font-weight:700;}
+  .net-stats .val.c{color:var(--cyan);} .net-stats .val.p{color:var(--pink);}
+
+  /* ============ RIGHT ============ */
+  .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .cal-head .month{font-size:11px; font-weight:700; color:var(--ink);}
+  .cal-nav{display:flex; gap:5px; color:var(--ink-faint); font-size:11px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px; text-align:center;}
+  .cal-grid .dow{font-size:7.5px; color:var(--ink-faint); padding-bottom:3px; letter-spacing:.04em;}
   .cal-grid .day{
-    position:relative; aspect-ratio:1; display:grid; place-items:center; border-radius:9px;
-    font:500 11px/1 'JetBrains Mono', monospace; color:var(--ink-dim);
+    position:relative; aspect-ratio:1; display:grid; place-items:center; border-radius:6px;
+    font-size:10px; color:var(--ink-dim);
   }
-  .cal-grid .day.mute{color:var(--ink-faint); opacity:.35;}
-  .cal-grid .day.today{background:linear-gradient(135deg, var(--magenta), var(--cyan)); color:#150a11; font-weight:700;}
-  .cal-grid .day.mark::after{
-    content:""; position:absolute; bottom:3px; width:3px; height:3px; border-radius:50%; background:var(--cyan);
-  }
+  .cal-grid .day.mute{color:var(--ink-faint); opacity:.3;}
+  .cal-grid .day.today{background:linear-gradient(135deg, var(--pink), var(--cyan)); color:#150a11; font-weight:700;}
+  .cal-grid .day.mark::after{ content:""; position:absolute; bottom:2px; width:3px; height:3px; border-radius:50%; background:var(--pink); }
+  .cal-grid .day.mark.c::after{ background:var(--cyan); }
 
-  .notice{display:flex; flex-direction:column; gap:2px;}
-  .notice-item{display:flex; gap:10px; padding:10px 2px; border-bottom:1px solid var(--line);}
+  .notice{display:flex; flex-direction:column;}
+  .notice-item{display:flex; gap:8px; padding:8px 1px; border-bottom:1px solid var(--line);}
   .notice-item:last-child{border-bottom:none;}
-  .notice-dot{width:7px; height:7px; border-radius:50%; margin-top:5px; flex:none; background:var(--cyan);}
-  .notice-item.warn .notice-dot{background:var(--magenta);}
-  .notice-item .n-title{font-size:12.5px; color:var(--ink); font-weight:500;}
-  .notice-item .n-sub{font-size:11px; color:var(--ink-faint); margin-top:2px;}
+  .notice-dot{width:6px; height:6px; border-radius:50%; margin-top:4px; flex:none; background:var(--cyan);}
+  .notice-item.warn .notice-dot{background:var(--pink);}
+  .notice-item .body{flex:1; min-width:0;}
+  .notice-item .n-title{font-size:10.5px; color:var(--ink); font-weight:600;}
+  .notice-item .n-sub{font-size:9px; color:var(--ink-faint); margin-top:1px;}
+  .notice-item .n-time{font-size:8px; color:var(--ink-faint); flex:none;}
+  .notice-row{display:flex; justify-content:space-between; gap:8px;}
+  .link-more{display:block; margin-top:8px; font-size:9px; color:var(--cyan); text-decoration:none;}
 
-  /* ============ FOOTER ============ */
-  .foot-wrap{display:flex; justify-content:center; flex:none;}
-  footer{
-    display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap;
-    padding:10px 20px; border-radius:999px;
-    background:var(--surface); border:1px solid var(--line);
-    font:500 10.5px/1 'JetBrains Mono', monospace; letter-spacing:.04em; color:var(--ink-faint);
+  .term-item{padding:8px 1px; border-bottom:1px solid var(--line); display:flex; gap:8px;}
+  .term-item:last-child{border-bottom:none;}
+  .term-dot{width:6px; height:6px; border-radius:50%; background:var(--pink); margin-top:5px; flex:none;}
+  .term-item .n-title{font-size:10.5px; color:var(--ink); font-weight:600;}
+  .term-item .n-sub{font-size:9px; color:var(--ink-faint); margin-top:1px;}
+  .term-item .n-time{font-size:9px; color:var(--cyan); font-weight:600;}
+
+  /* ============ FOOTER STRIP ============ */
+  .footstrip{
+    flex:none; display:flex; justify-content:center; align-items:center; gap:10px;
+    font-size:9px; color:var(--ink-faint); letter-spacing:.03em;
   }
-  footer a{color:var(--magenta); text-decoration:none; border-bottom:1px solid color-mix(in srgb, var(--magenta) 45%, transparent);}
-  footer a:hover{color:var(--cyan); border-color:var(--cyan);}
-  footer .sep{opacity:.5;}
-
-  @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+  .footstrip a{color:var(--pink); text-decoration:none; border-bottom:1px solid color-mix(in srgb, var(--pink) 45%, transparent);}
+  .footstrip a:hover{color:var(--cyan); border-color:var(--cyan);}
+  .footstrip .sep{opacity:.5;}
 
   @media (prefers-reduced-motion: reduce){
-    .dot, .ring, .orbit-ring, .planet, .caret, .task .bar span{ animation:none; }
-    .topbar, .panel, .orbit-stage, .grid2{ animation:none; opacity:1; transform:none; }
+    .dot, .orbit-ring, .planet, .cmdline .caret{ animation:none; }
     .log div{ animation:none; opacity:1; }
-    .task .bar span{ width:100% !important; }
   }
 </style>
 </head>
 <body>
-<div class="screen">
-<div class="shell">
 
   <div class="topbar">
-    <div class="brand">
-      <span class="logo">A.R.I</span>
-      <span class="tag">Control Interface</span>
-      <span class="ver">v1.0</span>
+    <div class="brand-row">
+      <div class="brand">
+        <span class="logo">A.R.I</span>
+        <span class="tag">SYSTEM CONTROL INTERFACE</span>
+      </div>
+      <span class="ver">v1.0.0</span>
     </div>
-    <div class="status-live"><span class="dot"></span> <b>SYSTEM ONLINE</b> <span style="color:var(--ink-faint)">· Kalender-Modul aktiv</span></div>
-    <div class="clock">
-      <span id="clockTime">--:--:--</span>
-      <span class="date" id="clockDate">--</span>
+    <div class="status-live">
+      <span class="l1"><span class="dot"></span>SYSTEM ONLINE</span>
+      <span class="l2">VERBUNDEN MIT HAUPTSYSTEM</span>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-row">
+        <span class="icon-btn">◍</span>
+        <span class="icon-btn">▤</span>
+        <span class="icon-btn">▦</span>
+        <span class="icon-btn">✉</span>
+        <span class="icon-btn">◈</span>
+        <span class="icon-btn">◎</span>
+        <span class="icon-btn">⚙</span>
+      </div>
+      <div class="clock-block">
+        <div class="t" id="clockTime">--:--:--</div>
+        <div class="d" id="clockDate">--</div>
+      </div>
       <span class="avatar"></span>
     </div>
   </div>
@@ -336,73 +339,147 @@
     <!-- LEFT -->
     <div class="col">
       <div class="panel">
-        <h3><span class="ico"></span>Modul-Status</h3>
-        <div class="rings">
-          <div class="ring-item">
-            <div class="ring" style="--ring-color:var(--magenta); --pct:100%"><span>ON</span></div>
-            <div class="ring-label">Kalender</div>
+        <h3><span class="ico">◇</span>System Status</h3>
+        <div class="gauges">
+          <div class="gauge-item">
+            <div class="gauge" style="--g-color:var(--pink); --g-pct:86%"><b>86<i>%</i></b></div>
+            <div class="gauge-sub">CPU<br>3.77 GHz</div>
           </div>
-          <div class="ring-item">
-            <div class="ring" style="--ring-color:var(--cyan); --pct:100%"><span>ON</span></div>
-            <div class="ring-label">Sprache</div>
+          <div class="gauge-item">
+            <div class="gauge" style="--g-color:var(--cyan); --g-pct:42%"><b>42<i>%</i></b></div>
+            <div class="gauge-sub">RAM<br>6.7 / 15.9 GB</div>
           </div>
-          <div class="ring-item">
-            <div class="ring" style="--ring-color:var(--magenta); --pct:100%"><span>OK</span></div>
-            <div class="ring-label">Datenschutz</div>
+          <div class="gauge-item">
+            <div class="gauge" style="--g-color:var(--pink); --g-pct:47%"><b>47<i>%</i></b></div>
+            <div class="gauge-sub">GPU<br>56°C</div>
           </div>
+        </div>
+        <div class="sparks">
+          <svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,22 12,20 24,16 36,18 48,10 60,13 72,7 84,9 100,4" fill="none" stroke="var(--pink)" stroke-width="2"/></svg>
+          <svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,16 12,18 24,14 36,17 48,15 60,19 72,13 84,16 100,15" fill="none" stroke="var(--cyan)" stroke-width="2"/></svg>
+          <svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,20 12,17 24,19 36,12 48,15 60,9 72,12 84,8 100,10" fill="none" stroke="var(--pink)" stroke-width="2"/></svg>
+        </div>
+        <div class="statboxes">
+          <div class="statbox"><div class="lbl">NETZWERK MB/S</div><div class="val"><span class="up">↑156</span> <span class="dn">↓59</span></div></div>
+          <div class="statbox"><div class="lbl">UPTIME</div><div class="val">12h 45m</div></div>
+          <div class="statbox"><div class="lbl">SYSTEM</div><div class="val" style="color:var(--cyan)">OPTIMAL</div></div>
         </div>
       </div>
 
       <div class="panel">
-        <h3><span class="ico"></span>Aktive Dienste</h3>
-        <div class="tasklist">
-          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Terminübersicht</span><span class="state">AKTIV</span></div><div class="bar"><span style="width:92%"></span></div></div>
-          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Spracherkennung</span><span class="state">BEREIT</span></div><div class="bar"><span style="width:64%"></span></div></div>
-          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Kalender-Sync</span><span class="state">AKTIV</span></div><div class="bar"><span style="width:100%"></span></div></div>
-          <div class="task"><div class="task-row"><span class="name"><span class="bullet"></span>Benachrichtigungen</span><span class="state">AKTIV</span></div><div class="bar"><span style="width:78%"></span></div></div>
-        </div>
+        <h3><span class="ico">◎</span>Aktive Tasks<span class="right">6 PROZESSE</span></h3>
+        <table class="tasks">
+          <thead><tr><th>TASK</th><th>STATUS</th><th>CPU</th><th>RAM</th></tr></thead>
+          <tbody>
+            <tr><td class="name"><span class="b"></span>Systemüberwachung</td><td class="state">LÄUFT</td><td>16%</td><td>452 MB</td></tr>
+            <tr><td class="name"><span class="b"></span>Datenanalyse</td><td class="state">LÄUFT</td><td>17%</td><td>1.2 GB</td></tr>
+            <tr><td class="name"><span class="b"></span>Sicherheits-Scan</td><td class="state">LÄUFT</td><td>9%</td><td>357 MB</td></tr>
+            <tr><td class="name"><span class="b"></span>Netzwerkoptimierung</td><td class="state">LÄUFT</td><td>8%</td><td>128 MB</td></tr>
+            <tr><td class="name"><span class="b"></span>Benachrichtigungsdienst</td><td class="state">LÄUFT</td><td>4%</td><td>96 MB</td></tr>
+            <tr><td class="name"><span class="b"></span>UI Prozess</td><td class="state">LÄUFT</td><td>3%</td><td>214 MB</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <div class="panel">
-        <h3><span class="ico"></span>Protokoll <span class="mono" style="margin-left:auto; color:var(--cyan); font-size:10px;">LIVE</span></h3>
+        <h3><span class="ico">▤</span>Befehls Protokoll<span class="right" style="color:var(--cyan)">● LIVE</span></h3>
         <div class="log" id="logBox"></div>
-        <div class="cmdline">
-          <span class="mono">&gt;_</span> Befehl eingeben (Demo) <span class="caret"></span>
-        </div>
+        <div class="cmdline">&gt;_ Befehl eingeben (Demo)<span class="caret"></span><span class="mic">MIC</span></div>
       </div>
     </div>
 
     <!-- CENTER -->
-    <div class="col">
-      <div class="hub">
+    <div class="col center-col">
+      <div class="hero">
+        <span class="axis a1">3300</span><span class="axis a2">2030</span>
+        <span class="axis a3">200</span><span class="axis a4">290</span>
+        <span class="axis a5">2900</span><span class="axis a6">2030</span>
+
         <div class="orbit-stage">
           <div class="orbit-ring r1"></div>
           <div class="orbit-ring r2"></div>
           <div class="planet"></div>
         </div>
         <h1>A.R.I</h1>
-        <p class="sub">System Online</p>
-        <div class="chips">
-          <span class="chip">Sprachsteuerung <b>Aktiv</b></span>
-          <span class="chip">Letzter Befehl <b id="lastCmd">–</b></span>
-        </div>
-        <p class="lede">
-          A.R.I ist ein privater Assistent, der lokal auf dem eigenen Rechner seines
-          Entwicklers läuft. Dieses Control-Panel betrifft ausschließlich die
-          Kalender-Anbindung: A.R.I liest bevorstehende Termine aus einem einzelnen
-          persönlichen Google-Kalender und kann auf Zuruf neue Termine eintragen.
-        </p>
+        <p class="sub">SYSTEM ONLINE</p>
+        <p class="say">Sag „Hey A.R.I“ oder tippe einen Befehl.</p>
 
-        <div class="grid2">
-          <div class="tile">
-            <div class="badge">01</div>
-            <h2>Was es ist</h2>
-            <p>Ein Hobby-Werkzeug für eine einzelne Person — kein öffentlicher Dienst, keine Registrierung, keine anderen Nutzer.</p>
+        <div class="pillrow">
+          <span class="pill">WACHWORT <b>AKTIV</b></span>
+          <span class="pill">MIKROFON <b>BEREIT</b></span>
+          <span class="pill">LETZTER BEFEHL <b id="lastCmd">--:--</b></span>
+        </div>
+        <div class="pillrow">
+          <span class="pill active">IDLE</span>
+          <span class="pill">ZUHÖREN</span>
+          <span class="pill">DENKEN</span>
+          <span class="pill">ANTWORTEN</span>
+          <span class="pill">TASK</span>
+        </div>
+      </div>
+
+      <div class="panel ov-panel">
+        <h3><span class="ico">◌</span>Systemüberblick</h3>
+        <div class="ov-grid">
+          <div class="ov-tile">
+            <div class="lbl">CPU AUSLASTUNG</div>
+            <div class="val">86<i>%</i></div>
+            <svg viewBox="0 0 100 20" preserveAspectRatio="none"><polyline points="0,16 15,14 30,10 45,12 60,7 75,9 100,3" fill="none" stroke="var(--pink)" stroke-width="2"/></svg>
           </div>
-          <div class="tile">
-            <div class="badge">02</div>
-            <h2>Was es tut</h2>
-            <p>Zeigt anstehende Termine an und legt neue an, wenn der Entwickler es per Sprache oder Text verlangt.</p>
+          <div class="ov-tile">
+            <div class="lbl">SYS TEMP</div>
+            <div class="val c">95<i>°C</i></div>
+            <svg viewBox="0 0 100 20" preserveAspectRatio="none"><polyline points="0,10 15,12 30,9 45,13 60,10 75,14 100,11" fill="none" stroke="var(--cyan)" stroke-width="2"/></svg>
+          </div>
+          <div class="ov-tile">
+            <div class="lbl">RAM AUSLASTUNG</div>
+            <div class="val">42<i>%</i></div>
+            <svg viewBox="0 0 100 20" preserveAspectRatio="none"><polyline points="0,12 15,13 30,10 45,14 60,11 75,13 100,9" fill="none" stroke="var(--pink)" stroke-width="2"/></svg>
+          </div>
+          <div class="ov-tile">
+            <div class="lbl">LÜFTER GESCHW.</div>
+            <div class="val c">1184<i>RPM</i></div>
+            <svg viewBox="0 0 100 20" preserveAspectRatio="none"><polyline points="0,9 15,11 30,8 45,12 60,7 75,10 100,6" fill="none" stroke="var(--cyan)" stroke-width="2"/></svg>
+          </div>
+          <div class="ov-tile">
+            <div class="lbl">GPU AUSLASTUNG</div>
+            <div class="val">47<i>%</i></div>
+            <svg viewBox="0 0 100 20" preserveAspectRatio="none"><polyline points="0,14 15,12 30,15 45,10 60,13 75,8 100,10" fill="none" stroke="var(--pink)" stroke-width="2"/></svg>
+          </div>
+          <div class="ov-tile">
+            <div class="lbl">NETZWERK</div>
+            <div class="val">156.0<i>MB/s</i></div>
+            <svg viewBox="0 0 100 20" preserveAspectRatio="none"><polyline points="0,13 15,10 30,14 45,8 60,11 75,7 100,9" fill="none" stroke="var(--pink)" stroke-width="2"/></svg>
+          </div>
+        </div>
+
+        <div class="bottom-row">
+          <div class="ov-tile">
+            <div class="lbl" style="margin-bottom:8px;">◈ SPEICHER</div>
+            <div class="donut-wrap">
+              <div class="donut"><span>62<i>% VERWENDET</i></span></div>
+              <div class="legend">
+                <div class="row"><span class="d" style="background:var(--pink)"></span>System<b>9.9 GB</b></div>
+                <div class="row"><span class="d" style="background:var(--cyan)"></span>Anwendungen<b>4.3 GB</b></div>
+                <div class="row"><span class="d" style="background:color-mix(in srgb, var(--pink) 55%, transparent)"></span>Cache<b>1.2 GB</b></div>
+                <div class="row"><span class="d" style="background:color-mix(in srgb, var(--cyan) 50%, transparent)"></span>Frei<b>6.0 GB</b></div>
+                <div class="row total">Gesamt<b style="margin-left:auto">21.4 GB</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="ov-tile">
+            <div class="lbl" style="margin-bottom:8px;">≈ NETZWERK-AKTIVITÄT</div>
+            <div class="net-chart">
+              <svg viewBox="0 0 200 56" preserveAspectRatio="none">
+                <polyline points="0,30 15,20 30,34 45,16 60,28 75,12 90,26 105,10 120,24 135,14 150,30 165,18 180,32 200,20" fill="none" stroke="var(--cyan)" stroke-width="1.4" stroke-dasharray="2 3"/>
+                <polyline points="0,40 15,36 30,44 45,32 60,42 75,26 90,38 105,22 120,36 135,28 150,44 165,30 180,40 200,34" fill="none" stroke="var(--pink)" stroke-width="1.4" stroke-dasharray="2 3"/>
+                <line x1="140" y1="4" x2="140" y2="52" stroke="var(--pink)" stroke-width="1" opacity=".5"/>
+              </svg>
+            </div>
+            <div class="net-stats">
+              <div><div class="lbl">DOWNLOAD</div><div class="val c">156.0<i style="font-size:8px; font-style:normal">MB/s</i></div></div>
+              <div><div class="lbl">UPLOAD</div><div class="val p">59.2<i style="font-size:8px; font-style:normal">MB/s</i></div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -419,57 +496,62 @@
       </div>
 
       <div class="panel">
-        <h3><span class="ico"></span>Hinweise</h3>
+        <h3><span class="ico">⟲</span>Benachrichtigungen</h3>
         <div class="notice">
           <div class="notice-item">
             <span class="notice-dot"></span>
-            <div><div class="n-title">Datenschutzerklärung verfügbar</div><div class="n-sub">Details zu Speicherung &amp; Widerruf</div></div>
+            <div class="body"><div class="notice-row"><span class="n-title">System Update verfügbar</span><span class="n-time">20:30</span></div><div class="n-sub">Jetzt installieren</div></div>
           </div>
           <div class="notice-item warn">
             <span class="notice-dot"></span>
-            <div><div class="n-title">Einzelnutzer-Anwendung</div><div class="n-sub">Kein öffentlicher Dienst, keine Registrierung</div></div>
+            <div class="body"><div class="notice-row"><span class="n-title">Sicherheitswarnung</span><span class="n-time">19:58</span></div><div class="n-sub">Unbekannter Login versucht</div></div>
           </div>
           <div class="notice-item">
             <span class="notice-dot"></span>
-            <div><div class="n-title">Google-Kalender verbunden</div><div class="n-sub">Ein persönlicher Kalender, keine Drittzugriffe</div></div>
+            <div class="body"><div class="notice-row"><span class="n-title">Backup abgeschlossen</span><span class="n-time">18:42</span></div><div class="n-sub">System-Backup erfolgreich</div></div>
+          </div>
+          <div class="notice-item">
+            <span class="notice-dot"></span>
+            <div class="body"><div class="notice-row"><span class="n-title">Neue Nachricht</span><span class="n-time">18:17</span></div><div class="n-sub">Von: Stark Industries</div></div>
           </div>
         </div>
+        <a class="link-more" href="#">Alle anzeigen ›</a>
       </div>
 
       <div class="panel">
-        <h3><span class="ico"></span>Datenschutz</h3>
-        <p style="margin:0; color:var(--ink-dim); font-size:13.5px;">
-          Details zu Daten, Speicherung und Widerruf stehen in der
-          <a href="https://kingshadow1332.github.io/privacy.html" style="color:var(--magenta); border-bottom:1px solid color-mix(in srgb, var(--magenta) 45%, transparent); text-decoration:none;">Datenschutzerklärung</a>.
-        </p>
+        <h3><span class="ico">›</span>Nächste Termine</h3>
+        <div class="term-item">
+          <span class="term-dot"></span>
+          <div class="body" style="flex:1"><div class="notice-row"><span class="n-title">Projektbesprechung</span><span class="n-time">Morgen · 09:00</span></div><div class="n-sub">Konferenzraum 1</div></div>
+        </div>
+        <div class="term-item">
+          <span class="term-dot" style="background:var(--cyan)"></span>
+          <div class="body" style="flex:1"><div class="notice-row"><span class="n-title">Entwicklung Review</span><span class="n-time">26. Sep · 14:30</span></div><div class="n-sub">Online Meeting</div></div>
+        </div>
+        <div class="term-item">
+          <span class="term-dot"></span>
+          <div class="body" style="flex:1"><div class="notice-row"><span class="n-title">Kundenpräsentation</span><span class="n-time">27. Sep · 11:00</span></div><div class="n-sub">Stark Tower · Raum 42</div></div>
+        </div>
+        <a class="link-more" href="#">Alle Termine anzeigen ›</a>
       </div>
     </div>
 
   </div>
 
-  <div class="foot-wrap">
-    <footer>
-      <span>A.R.I Control · Einzelnutzer-Anwendung</span>
-      <span class="sep">·</span>
-      <a href="https://kingshadow1332.github.io/privacy.html">Datenschutzerklärung</a>
-    </footer>
+  <div class="footstrip">
+    <span>A.R.I Control · Einzelnutzer-Anwendung · Demo-Ansicht</span>
+    <span class="sep">·</span>
+    <a href="https://kingshadow1332.github.io/privacy.html">Datenschutzerklärung</a>
   </div>
 
-</div>
-</div>
-
 <script>
-  // live clock
   function tick(){
     var now = new Date();
-    var t = now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    var d = now.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
-    document.getElementById('clockTime').textContent = t;
-    document.getElementById('clockDate').textContent = d;
+    document.getElementById('clockTime').textContent = now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    document.getElementById('clockDate').textContent = now.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
   }
   tick(); setInterval(tick, 1000);
 
-  // calendar (current month, real dates)
   (function(){
     var now = new Date();
     var year = now.getFullYear(), month = now.getMonth();
@@ -482,10 +564,11 @@
     });
 
     var first = new Date(year, month, 1);
-    var startOffset = (first.getDay() + 6) % 7; // Monday-first
+    var startOffset = (first.getDay() + 6) % 7;
     var daysInMonth = new Date(year, month+1, 0).getDate();
     var daysInPrev = new Date(year, month, 0).getDate();
     var today = now.getDate();
+    var marks = [1,8,15,21,26];
 
     for(var i=0;i<startOffset;i++){
       var el = document.createElement('div'); el.className='day mute';
@@ -495,7 +578,8 @@
     for(var d=1; d<=daysInMonth; d++){
       var el = document.createElement('div'); el.className='day';
       if(d === today) el.className += ' today';
-      if([1,8,15,24,26].indexOf(d) !== -1) el.className += ' mark';
+      if(marks.indexOf(d) !== -1) el.className += ' mark';
+      if(d === 24) el.className += ' mark c';
       el.textContent = d;
       grid.appendChild(el);
     }
@@ -507,24 +591,27 @@
     }
   })();
 
-  // demo log feed
   (function(){
     var lines = [
-      'Kalender synchronisiert … OK',
-      'Sprachmodul im Standby',
-      'Datenschutzrichtlinie geladen',
-      'Keine ausstehenden Termine',
-      'Verbindung zu Google-Kalender aktiv',
-      'Systemcheck abgeschlossen'
+      'MODELL CACHE GELEERT … 1.2 GB FREI',
+      'KONTEXT INDEX … 4 812 CHUNKS',
+      'THERMAL PROFIL … AUSBALANCIERT',
+      'SPEICHER DEFRAG … 34% ABGESCHLOSSEN',
+      'NETZ LATENZ 88 ms … NORMALISIERT',
+      'SICHERHEITS-SCAN … KEINE FUNDE',
+      'INFERENZ QUEUE … 0 OFFEN'
     ];
     var box = document.getElementById('logBox');
+    var lastCmd = document.getElementById('lastCmd');
     var i = 0;
     function addLine(){
-      var now = new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      var now = new Date();
+      var t = now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
       var row = document.createElement('div');
-      row.innerHTML = '<span class="t">'+now+'</span> <span class="m">'+lines[i % lines.length]+'</span>';
+      row.innerHTML = '<span class="t">'+t+'</span> <span class="m">'+lines[i % lines.length]+'</span>';
       box.insertBefore(row, box.firstChild);
       while(box.children.length > 7){ box.removeChild(box.lastChild); }
+      lastCmd.textContent = now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
       i++;
     }
     addLine();
