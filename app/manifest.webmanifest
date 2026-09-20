@@ -1,0 +1,11 @@
+{
+  "name": "A.R.I",
+  "short_name": "A.R.I",
+  "description": "Persönlicher Sprachassistent - läuft auch ohne PC",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#03040a",
+  "theme_color": "#03040a",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
