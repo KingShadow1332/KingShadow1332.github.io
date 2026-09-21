@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -55,7 +56,7 @@ section.on{display:flex}
 .panel-h .t{font:700 11.5px var(--font-mono);letter-spacing:.22em;color:var(--pink)}
 .panel-h.cy .t,.panel-h.cy .ico{color:var(--cyan);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--cyan) 55%,transparent))}
 .panel-h .tag{margin-left:auto;font:500 9px var(--font-mono);letter-spacing:.1em;color:var(--text-dim2)}
-.btn{background:color-mix(in srgb,var(--cyan) 6%,rgba(255,255,255,.03));border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);color:var(--text);
+.btn{display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--cyan) 6%,rgba(255,255,255,.03));border:1px solid color-mix(in srgb,var(--cyan) 30%,transparent);color:var(--text);
   border-radius:8px;padding:12px 10px;font:600 12px var(--font-mono);letter-spacing:.08em;min-height:44px}
 .btn:active{background:color-mix(in srgb,var(--cyan) 22%,transparent)}
 .btn.pri{border-color:var(--pink);color:var(--pink-2);background:color-mix(in srgb,var(--pink) 10%,transparent)}
@@ -340,6 +341,10 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
 <main>
   <!-- CHAT -->
   <section id="t-chat" class="on">
+    <div class="panel" id="updBanner" style="display:none;flex:none"><div class="panel-h"><span class="ico">⟳</span><span class="t">UPDATE VERFÜGBAR</span><span class="tag" id="updBannerVer"></span></div>
+      <div class="dim" id="updBannerText"></div>
+      <div class="row" style="margin-top:10px"><button class="btn pri" id="updBannerGo">JETZT AKTUALISIEREN</button><button class="btn" id="updBannerLater" style="flex:0 0 90px">SPÄTER</button></div>
+    </div>
     <div class="panel orbpanel" style="padding-bottom:4px"><div class="orbwrap">
         <div class="hero-visual">
           <div class="hero-glow"></div>
@@ -426,6 +431,10 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
 
   <!-- PC -->
   <section id="t-pc">
+    <div class="panel"><div class="panel-h"><span class="ico">⇄</span><span class="t">SYNCHRONISATION</span><span class="tag" id="syncTag">–</span></div>
+      <div class="dim" id="syncStatus">Nicht mit dem PC verbunden. Öffne den Link aus der A.R.I-Mail (oder füge ihn unten ein) – danach bleiben Gehirn, Einstellungen und API-Schlüssel automatisch auf demselben Stand.</div>
+      <div class="row" style="margin-top:10px"><button class="btn pri" id="syncNow">JETZT SYNCHRONISIEREN</button><button class="btn dng" id="syncOff" style="flex:0 0 96px">TRENNEN</button></div>
+    </div>
     <div class="panel"><div class="panel-h cy"><span class="ico">▣</span><span class="t">MIT DEM PC VERBINDEN</span></div>
       <div class="dim" style="margin-bottom:10px">Die App läuft ohne PC. Für Bildschirm, Steuerung und Mediensteuerung öffnest du deinen PC – im Heim-WLAN oder unterwegs über den Link, den A.R.I dir per Mail schickt.</div>
       <div class="set"><label>PC-LINK / ADRESSE</label><input id="pcLink" placeholder="https://….trycloudflare.com/phone#l=… oder http://192.168.…:5000/phone"></div>
@@ -440,6 +449,15 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
 
   <!-- EINSTELLUNGEN -->
   <section id="t-set">
+    <div class="panel" id="updPanel" style="display:none"><div class="panel-h cy"><span class="ico">⟳</span><span class="t">APP-UPDATE</span><span class="tag" id="updVer">–</span></div>
+      <div class="dim" id="updText">Prüft beim Start automatisch, ob es eine neue Version gibt.</div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="updCheck">NACH UPDATES SUCHEN</button><button class="btn pri" id="updGo" style="display:none">JETZT AKTUALISIEREN</button></div>
+      <div class="dim2" id="updProg" style="margin-top:8px"></div>
+    </div>
+    <div class="panel" id="installPanel" style="display:none"><div class="panel-h cy"><span class="ico">⬇</span><span class="t">ALS APP INSTALLIEREN</span></div>
+      <div class="dim" id="installText">Installiere A.R.I auf dem Startbildschirm: eigenes Symbol, ohne Browser-Rahmen, startet auch offline.</div>
+      <button class="btn pri" id="installBtn" style="width:100%;margin-top:10px;display:none">APP INSTALLIEREN</button>
+    </div>
     <div class="panel"><div class="panel-h"><span class="ico">◉</span><span class="t">KI-ANBIETER</span></div>
       <div class="set"><label>ANBIETER</label><select id="sProv"><option value="groq">Groq</option><option value="gemini">Gemini (Google)</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
       <div class="set"><label>API-SCHLÜSSEL</label><input id="sKey" type="password" autocomplete="off" placeholder="Schlüssel des gewählten Anbieters"></div>
