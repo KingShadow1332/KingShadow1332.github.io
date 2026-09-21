@@ -163,7 +163,7 @@ input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix
 .orb-label .state{font:500 9px/1 var(--font-mono); letter-spacing:.26em; color:var(--text-dim)}
 .orb-bars{position:absolute; left:0; right:0; bottom:6%; display:flex; align-items:flex-end; justify-content:center; gap:3px; height:22px; opacity:var(--bars); transition:opacity .25s ease; pointer-events:none}
 .orb-bars span{width:2px; height:100%; transform-origin:bottom; background:linear-gradient(180deg, var(--cyan-2), color-mix(in srgb, var(--pink) 70%, transparent)); animation:orbBar ease-in-out infinite}
-.orb{width:286px; height:286px; margin:10px 0 6px; will-change:transform}
+.orb{width:210px; height:210px; margin:6px 0 4px; will-change:transform}
 .orb-glow-pink{filter:blur(40px)}
 .orb-glow-cyan{filter:blur(30px); opacity:.42}
 /* Ringkante: weicher Verlauf + leichte Weichzeichnung statt harter 1px-Linie */
@@ -255,7 +255,7 @@ input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix
 .hero-visual{overflow:visible;width:100%}
 .orb-label{top:-5%!important}
 .orb.busy{--wave:1;--glow:.85;--spd:2s;--sweep:2.5s;--sweepOp:.9;--r1:4s;--r2:6s;--r3:8s;--r4:9s}
-.panel.orbpanel{backdrop-filter:none;-webkit-backdrop-filter:none;clip-path:none;overflow:visible;border-radius:16px;padding:26px 14px 18px;background:linear-gradient(168deg,rgba(38,32,58,.78) 0%,rgba(16,14,26,.9) 58%,rgba(11,10,18,.95) 100%)}
+.panel.orbpanel{backdrop-filter:none;-webkit-backdrop-filter:none;clip-path:none;overflow:hidden;border-radius:16px;padding:22px 14px 14px;background:linear-gradient(168deg,rgba(38,32,58,.78) 0%,rgba(16,14,26,.9) 58%,rgba(11,10,18,.95) 100%)}
 .orbwrap .orb{--glow:.9;--sweepOp:.85}
 .orbwrap .sphere-core{background:radial-gradient(circle at 31% 25%,#fff 0%,#fff0f6 8%,#ffd3e4 16%,var(--pink-2) 28%,#ff6f9c 42%,var(--am) 58%,#d63a76 72%,#8a2358 86%,#3b1233 100%),radial-gradient(circle at 76% 80%,rgba(89,220,240,.2) 0%,transparent 42%);box-shadow:0 0 90px -4px color-mix(in srgb,var(--pink) 65%,transparent),inset -16px -14px 44px rgba(8,4,14,.6),inset 14px 12px 40px rgba(89,220,240,.28)}
 .orbwrap .sphere-shade{background:radial-gradient(circle at 74% 76%,rgba(4,2,10,.45),transparent 66%)}
@@ -438,6 +438,7 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
     <div class="panel"><div class="panel-h cy"><span class="ico">▣</span><span class="t">MIT DEM PC VERBINDEN</span></div>
       <div class="dim" style="margin-bottom:10px">Die App läuft ohne PC. Für Bildschirm, Steuerung und Mediensteuerung öffnest du deinen PC – im Heim-WLAN oder unterwegs über den Link, den A.R.I dir per Mail schickt.</div>
       <div class="set"><label>PC-LINK / ADRESSE</label><input id="pcLink" placeholder="https://….trycloudflare.com/phone#l=… oder http://192.168.…:5000/phone"></div>
+      <button class="btn" id="qrScan" style="width:100%;margin-bottom:8px">▣ QR-CODE VOM PC SCANNEN</button>
       <button class="btn pri" id="pcGo" style="width:100%">PC ÖFFNEN</button>
       <div class="dim2" id="pcMsg" style="margin-top:8px"></div>
       <div id="pcSaved" style="margin-top:12px"></div>
@@ -454,6 +455,11 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
       <div class="row" style="margin-top:10px"><button class="btn" id="updCheck">NACH UPDATES SUCHEN</button><button class="btn pri" id="updGo" style="display:none">JETZT AKTUALISIEREN</button></div>
       <div class="dim2" id="updProg" style="margin-top:8px"></div>
     </div>
+    <div class="panel" id="wakePanel" style="display:none"><div class="panel-h cy"><span class="ico">◉</span><span class="t">IM HINTERGRUND HÖREN</span><span class="tag" id="wakeTag">AUS</span></div>
+      <div class="dim" id="wakeText">Optional: A.R.I lauscht im Hintergrund auf „A.R.I“ und öffnet sich dann von selbst. Dafür läuft eine dauerhafte Benachrichtigung, das Mikrofon ist aktiv und der Akku wird stärker belastet.</div>
+      <div class="row" style="margin-top:10px"><button class="btn pri" id="wakeToggle">EINSCHALTEN</button><button class="btn" id="wakeOverlay">„ÜBER ANDEREN APPS“ ERLAUBEN</button></div>
+      <div class="dim2" id="wakeMsg" style="margin-top:8px"></div>
+    </div>
     <div class="panel" id="installPanel" style="display:none"><div class="panel-h cy"><span class="ico">⬇</span><span class="t">ALS APP INSTALLIEREN</span></div>
       <div class="dim" id="installText">Installiere A.R.I auf dem Startbildschirm: eigenes Symbol, ohne Browser-Rahmen, startet auch offline.</div>
       <button class="btn pri" id="installBtn" style="width:100%;margin-top:10px;display:none">APP INSTALLIEREN</button>
@@ -463,6 +469,7 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
       <div class="set"><label>API-SCHLÜSSEL</label><input id="sKey" type="password" autocomplete="off" placeholder="Schlüssel des gewählten Anbieters"></div>
       <div class="dim2">Der Schlüssel bleibt nur auf diesem Handy (Browser-Speicher) und geht direkt an den Anbieter – nirgendwo sonst hin.</div>
       <div class="set" style="margin-top:12px"><label>AUSWEICH-ANBIETER (WENN LIMIT ERREICHT)</label><select id="sProv2"><option value="">keiner</option><option value="gemini">Gemini (Google)</option><option value="groq">Groq</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
+      <div class="set"><label>WEITERE GROQ-SCHLÜSSEL (EINER PRO ZEILE)</label><textarea id="sGroqMore" rows="3" autocomplete="off" spellcheck="false" placeholder="Bei erreichtem Limit wechselt A.R.I automatisch zum nächsten Schlüssel" style="width:100%;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);color:var(--text);border-radius:8px;padding:10px;font:13px var(--font-mono)"></textarea></div>
       <div class="set"><label>SCHLÜSSEL AUSWEICH-ANBIETER</label><input id="sKey2" type="password" autocomplete="off" placeholder="Schlüssel"></div>
       <div class="set"><label>SPRACHE</label><select id="sLang"><option value="de-DE">Deutsch</option><option value="en-US">English</option><option value="fr-FR">Français</option><option value="es-ES">Español</option><option value="it-IT">Italiano</option></select></div>
       <div class="set"><label>ANTWORTEN VORLESEN</label><div class="seg" id="sTts"><button class="btn" data-v="1">AN</button><button class="btn" data-v="0">AUS</button></div></div>
@@ -488,6 +495,8 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
   <button data-t="set"><b>⚙</b>EINST.</button>
 </nav>
 
+<script src="jsqr.js"></script>
 <script src="app.js"></script>
+<div id="qrOv" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;align-items:center;justify-content:center;gap:12px"><video id="qrVid" playsinline muted style="width:100%;max-height:70vh;object-fit:cover"></video><div class="dim" id="qrMsg" style="color:#dff6ff">Richte die Kamera auf den QR-Code am PC (Einstellungen → HANDY).</div><button class="btn" id="qrClose" style="width:60%">ABBRECHEN</button></div>
 </body>
 </html>
