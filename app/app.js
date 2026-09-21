@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 
 /* ---------- Zustand ---------- */
@@ -30,8 +31,8 @@ function runTool(name,a){
   a=a||{};
   if(name==='remember'){const t=String(a.text||'').trim();if(t.length<4)return 'Nichts gespeichert (zu kurz).';
     if(brain.some(n=>n.text.toLowerCase()===t.toLowerCase()))return 'Das wusste ich schon.';
-    brain.push({id:Date.now()+Math.random().toString(36).slice(2,6),text:t,cat:String(a.category||'Wissen').slice(0,30),ts:Date.now()});saveBrain();return 'Gespeichert.';}
-  if(name==='forget'){const q=String(a.query||'').toLowerCase();const n0=brain.length;brain=brain.filter(n=>!n.text.toLowerCase().includes(q));saveBrain();return (n0-brain.length)+' Eintrag/Eintraege geloescht.';}
+    brain.push({id:Date.now()+Math.random().toString(36).slice(2,6),text:t,cat:String(a.category||'Wissen').slice(0,30),ts:Date.now()});saveBrain();syncSoon();return 'Gespeichert.';}
+  if(name==='forget'){const q=String(a.query||'').toLowerCase();const gone=brain.filter(n=>n.text.toLowerCase().includes(q));brain=brain.filter(n=>!gone.includes(n));saveBrain();gone.forEach(n=>{sync.deleted=(sync.deleted||[]).concat(n.text);});saveSync();syncSoon();return gone.length+' Eintrag/Eintraege geloescht.';}
   if(name==='maps_route'){const d=String(a.destination||'').trim();if(!d)return 'Kein Ziel.';
     const m={driving:1,walking:1,bicycling:1,transit:1}[a.mode]?a.mode:'driving';
     let u='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(d)+'&travelmode='+m;if(a.origin)u+='&origin='+encodeURIComponent(a.origin);
@@ -134,7 +135,19 @@ $('#send').onclick=()=>{const v=$('#msg').value;$('#msg').value='';send(v);};
 $('#msg').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#send').click();}});
 $$('.chips .btn[data-q]').forEach(b=>b.onclick=()=>{const q=b.dataset.q;if(q.endsWith(' ')){$('#msg').value=q;$('#msg').focus();}else send(q);});
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+async function nativeMic(){
+  const P=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.SpeechRecognition;
+  if(!P){addMsg('a','Spracheingabe ist in dieser App nicht verfügbar – nutze das Mikrofon deiner Tastatur.');return;}
+  try{
+    const av=await P.available();if(!av.available){addMsg('a','Dieses Handy hat keine Spracherkennung – nutze das Mikrofon deiner Tastatur.');return;}
+    const perm=await P.requestPermissions();if(perm.speechRecognition!=='granted'){addMsg('a','Bitte erlaube A.R.I das Mikrofon (Handy-Einstellungen → Apps → A.R.I → Berechtigungen).');return;}
+    orbBusy(true,'HÖRT ZU …');
+    const r=await P.start({language:cfg.lang,maxResults:1,prompt:'Sag A.R.I, was er tun soll',partialResults:false,popup:true});
+    orbBusy(false);const txt=(r&&r.matches&&r.matches[0])||'';if(txt)send(txt);
+  }catch(e){orbBusy(false);}
+}
 function mic(){
+  if(NATIVE){nativeMic();return;}
   if(!SR){addMsg('a','Spracheingabe wird von diesem Browser nicht unterstützt – nutze das Mikrofon deiner Tastatur.');return;}
   const r=new SR();r.lang=cfg.lang;orbBusy(true,'HÖRT ZU …');r.onresult=e=>send(e.results[0][0].transcript);r.onend=()=>orbBusy(false);r.onerror=()=>orbBusy(false);try{r.start();}catch(e){orbBusy(false);}
 }
@@ -152,7 +165,7 @@ function renderBrain(){
   if(!sel.length){list.textContent=brain.length?'Nichts gefunden.':'Noch nichts gespeichert – sag „Merk dir, dass …“.';list.className='dim';return;}list.className='';
   sel.slice(0,200).forEach(n=>{const d=document.createElement('div');d.className='mem';d.style.display='flex';d.style.gap='8px';d.style.justifyContent='space-between';
     const c=document.createElement('div');const s=document.createElement('small');s.textContent=n.cat.toUpperCase();const t=document.createElement('div');t.textContent=n.text;c.append(s,t);
-    const x=document.createElement('button');x.className='btn dng';x.style.cssText='min-height:32px;padding:4px 10px;flex:none';x.textContent='✕';x.onclick=()=>{brain=brain.filter(m=>m!==n);saveBrain();renderBrain();};
+    const x=document.createElement('button');x.className='btn dng';x.style.cssText='min-height:32px;padding:4px 10px;flex:none';x.textContent='✕';x.onclick=()=>{brain=brain.filter(m=>m!==n);saveBrain();sync.deleted=(sync.deleted||[]).concat(n.text);saveSync();syncSoon();renderBrain();};
     d.append(c,x);list.appendChild(d);});
 }
 $('#brSearch').addEventListener('input',renderBrain);
@@ -168,6 +181,8 @@ function renderPcs(){
 }
 $('#pcGo').onclick=()=>{
   let v=$('#pcLink').value.trim();if(!v){$('#pcMsg').textContent='Bitte Link oder Adresse einfügen.';return;}
+  {const L=parseLink(v);if(L){$('#pcLink').value='';pairFromLink(L.origin,L.code);return;}}
+  {const M=/^(https?:[/][/][^/#]+)[/]phone#c=([0-9]{6})/.exec(v);if(M&&NATIVE){$('#pcLink').value='';pairFromLink(M[1],M[2]);return;}}
   if(!/^https?:\/\//i.test(v))v='http://'+v;
   let u;try{u=new URL(v);}catch(e){$('#pcMsg').textContent='Ungültige Adresse.';return;}
   if(!/\/phone/.test(u.pathname))u.pathname=u.pathname.replace(/\/$/,'')+'/phone';
@@ -182,8 +197,8 @@ function loadSet(){
   $('#sProv').value=cfg.provider;$('#sKey').value=cfg.keys[cfg.provider]||'';$('#sProv2').value=cfg.fb||'';$('#sKey2').value=cfg.fbKey||'';$('#sLang').value=cfg.lang;
   $$('#sTts .btn').forEach(b=>b.classList.toggle('on',b.dataset.v===cfg.tts));
 }
-$('#sProv').onchange=()=>{cfg.provider=$('#sProv').value;$('#sKey').value=cfg.keys[cfg.provider]||'';saveCfg();};
-$('#sKey').onchange=()=>{cfg.keys[cfg.provider]=$('#sKey').value.trim();saveCfg();};
+$('#sProv').onchange=()=>{cfg.provider=$('#sProv').value;$('#sKey').value=cfg.keys[cfg.provider]||'';saveCfg();sync.dirtySet=true;saveSync();syncSoon();};
+$('#sKey').onchange=()=>{cfg.keys[cfg.provider]=$('#sKey').value.trim();saveCfg();sync.dirtyKeys=true;saveSync();syncSoon();};
 $('#sProv2').onchange=()=>{cfg.fb=$('#sProv2').value;saveCfg();};
 $('#sKey2').onchange=()=>{cfg.fbKey=$('#sKey2').value.trim();saveCfg();};
 $('#sLang').onchange=()=>{cfg.lang=$('#sLang').value;saveCfg();};
@@ -201,7 +216,7 @@ $('#sImport').onchange=async e=>{
     if(s.primary&&/^#[0-9a-f]{6}$/i.test(s.primary))document.documentElement.style.setProperty('--pink',s.primary);
     if(s.accent&&/^#[0-9a-f]{6}$/i.test(s.accent))document.documentElement.style.setProperty('--cyan',s.accent);
     store.set('ari-app-theme',{primary:s.primary,accent:s.accent});
-    saveCfg();loadSet();msg.textContent='✓ Übernommen: Anbieter '+cfg.provider+(cfg.fb?', Ausweich '+cfg.fb:'')+'. (Nur Schlüssel/Anbieter/Sprache/Farben – die Datei bleibt auf dem Handy.)';
+    sync.dirtyKeys=true;sync.dirtySet=true;saveSync();syncSoon();saveCfg();loadSet();msg.textContent='✓ Übernommen: Anbieter '+cfg.provider+(cfg.fb?', Ausweich '+cfg.fb:'')+'. (Nur Schlüssel/Anbieter/Sprache/Farben – die Datei bleibt auf dem Handy.)';
   }catch(er){msg.textContent='Datei nicht lesbar.';}
   e.target.value='';
 };
@@ -215,8 +230,119 @@ $('#brImport').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{con
 $('#wipe').onclick=()=>{if(!confirm('Alle Daten dieser App auf diesem Handy löschen (Schlüssel, Gehirn, gespeicherte PCs)?'))return;
   ['ari-app-cfg','ari-app-brain','ari-app-pcs','ari-app-theme'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});location.reload();};
 
+
+/* ---------- Synchronisation mit dem PC (Gehirn, Einstellungen, API-Schluessel) ---------- */
+// Die App sendet Daten NUR an den PC, mit dem du sie per Link gekoppelt hast (Geraete-Token).
+let sync=store.get('ari-app-sync',{origin:'',token:'',deleted:[],dirtyKeys:false,dirtySet:false,last:0,groqAll:[],pc:{}});
+const saveSync=()=>store.set('ari-app-sync',sync);
+const SYNC_TRUSTED=new RegExp('^https:[/][/][a-z0-9-]+[.]trycloudflare[.]com$');
+const LAN_OK=new RegExp('^http:[/][/](192[.]168[.][0-9]+[.][0-9]+|10[.][0-9]+[.][0-9]+[.][0-9]+|172[.](1[6-9]|2[0-9]|3[01])[.][0-9]+[.][0-9]+)(:[0-9]+)?$');
+function syncStatus(t,ok){$('#syncStatus').textContent=t;$('#syncTag').textContent=sync.token?(ok===false?'GETRENNT':'VERBUNDEN'):'–';}
+async function pairFromLink(origin,code){
+  if(!(SYNC_TRUSTED.test(origin)||(NATIVE&&LAN_OK.test(origin)))){syncStatus('Ungültige PC-Adresse im Link.',false);return;}
+  if(!confirm('Mit deinem PC verbinden und alles synchronisieren (Gehirn, Einstellungen, API-Schlüssel)?\n\nAdresse: '+origin+'\n\nNur bestätigen, wenn der Link von deinem eigenen A.R.I stammt.'))return;
+  syncStatus('Verbinde …');
+  try{
+    const r=await fetch(origin+'/phone/pair',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,name:'Handy-App'})});
+    const d=await r.json();
+    if(!r.ok||!d.token){syncStatus('Kopplung fehlgeschlagen: '+(d.error||r.status),false);return;}
+    sync.origin=origin;sync.token=d.token;sync.dirtyKeys=false;sync.dirtySet=false;saveSync();
+    await syncNow();goTab('pc');
+  }catch(e){syncStatus('PC nicht erreichbar (läuft A.R.I und der Tunnel?).',false);}
+}
+function parseLink(str){
+  const m=/pc=([^&]+)&l=([A-Za-z0-9_-]+)/.exec(str||'');if(!m)return null;
+  let o;try{o=decodeURIComponent(m[1]);}catch(e){return null;}return {origin:o.replace(/\/+$/,''),code:m[2]};
+}
+function pushSettings(){const s={};if(!sync.dirtySet)return s;s.provider=cfg.provider;return s;}
+function pushKeys(){
+  if(!sync.dirtyKeys)return undefined;
+  const k={};['anthropic','openai','gemini'].forEach(p=>{k[p]=cfg.keys[p]||'';});
+  const g=(sync.groqAll||[]).slice();g[0]=cfg.keys.groq||'';k.groq=g.filter(Boolean);return k;
+}
+let syncBusy=false;
+async function syncNow(){
+  if(!sync.token||!sync.origin||syncBusy)return;syncBusy=true;
+  try{
+    const body={brain:brain.map(n=>({text:n.text,cat:n.cat})),deleted:sync.deleted||[],settings:pushSettings(),apiKeys:pushKeys()};
+    const r=await fetch(sync.origin+'/phone/api/sync',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify(body)});
+    if(r.status===401){sync.token='';saveSync();syncStatus('Kopplung abgelaufen – bitte den neuen Link aus der A.R.I-Mail öffnen.',false);return;}
+    const d=await r.json();
+    // Gehirn: Stand vom PC uebernehmen (enthaelt jetzt auch unsere Ergaenzungen), lokale IDs behalten
+    const old=new Map(brain.map(n=>[n.text.toLowerCase(),n]));
+    brain=(d.brain||[]).map(n=>{const o=old.get(String(n.text).toLowerCase());return o?Object.assign(o,{cat:n.cat}):{id:Date.now()+Math.random().toString(36).slice(2,6),text:n.text,cat:n.cat,ts:Date.now()};});
+    saveBrain();sync.deleted=[];
+    // Einstellungen + Schluessel vom PC
+    const s=d.settings||{};sync.pc=s;
+    if(!sync.dirtySet){if(PROV[s.provider])cfg.provider=s.provider;}
+    if(s.language&&s.language!=='auto'&&[...$('#sLang').options].some(o=>o.value===s.language))cfg.lang=s.language;
+    if(s.primary&&/^#[0-9a-f]{6}$/i.test(s.primary)||s.accent){const th={primary:s.primary,accent:s.accent};store.set('ari-app-theme',th);applyThemeSaved();}
+    const k=d.apiKeys||{};['anthropic','openai','gemini'].forEach(p=>{if(typeof k[p]==='string'&&k[p])cfg.keys[p]=k[p];});
+    if(Array.isArray(k.groq)&&k.groq.length){sync.groqAll=k.groq;cfg.keys.groq=k.groq[0];}
+    if(cfg.fb&&cfg.keys[cfg.fb])cfg.fbKey=cfg.keys[cfg.fb];
+    else{for(const p of ['gemini','groq','openai','anthropic']){if(p!==cfg.provider&&cfg.keys[p]){cfg.fb=p;cfg.fbKey=cfg.keys[p];break;}}}
+    sync.dirtyKeys=false;sync.dirtySet=false;sync.last=Date.now();saveSync();saveCfg();loadSet();
+    syncStatus('✓ Synchron · '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · '+brain.length+' Erinnerungen'+(d.hud_seen?'':' · (HUD am PC einmal öffnen, damit alle Einstellungen ankommen)'));
+    if($('#t-brain').classList.contains('on'))renderBrain();
+  }catch(e){syncStatus('PC gerade nicht erreichbar – Änderungen werden nachgeholt. (Tunnel-Adresse ändert sich bei jedem PC-Start: neuen Link aus der Mail öffnen.)',false);}
+  finally{syncBusy=false;}
+}
+function applyThemeSaved(){const th=store.get('ari-app-theme',null);if(th){if(th.primary)document.documentElement.style.setProperty('--pink',th.primary);if(th.accent)document.documentElement.style.setProperty('--cyan',th.accent);}}
+let syncT=null;const syncSoon=()=>{clearTimeout(syncT);syncT=setTimeout(syncNow,1500);};
+$('#syncNow').onclick=syncNow;
+$('#syncOff').onclick=()=>{if(!confirm('Synchronisation mit dem PC beenden? (Daten auf dem Handy bleiben.)'))return;sync.token='';sync.origin='';saveSync();syncStatus('Nicht mit dem PC verbunden.');};
+setInterval(()=>{if(!document.hidden)syncNow();},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow();});
+{const L=parseLink(location.hash);if(L){history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);}
+ else if(sync.token){syncStatus('Verbunden mit PC – synchronisiere …');syncNow();}}
+
+/* ---------- Als App installieren ---------- */
+let installEvt=null;
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installPanel').style.display='';$('#installBtn').style.display='';});
+$('#installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice;}catch(e){}installEvt=null;$('#installBtn').style.display='none';};
+window.addEventListener('appinstalled',()=>{$('#installPanel').style.display='none';});
+if(!isStandalone()){
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(ios){$('#installPanel').style.display='';$('#installText').textContent='iPhone/iPad: Tippe unten in Safari auf „Teilen“ (Quadrat mit Pfeil) und dann auf „Zum Home-Bildschirm“. Danach startet A.R.I wie eine App.';}
+  else{setTimeout(()=>{if(!installEvt&&!isStandalone()){$('#installPanel').style.display='';$('#installText').textContent='Android/Chrome: Tippe oben rechts auf das Menü (⋮) und dann auf „App installieren“ bzw. „Zum Startbildschirm hinzufügen“.';}},2500);}
+}
+
+/* ---------- App-Update ueber GitHub (nur in der installierten Android-App) ---------- */
+// Prueft beim Start und alle 6 Stunden version.json neben der App-Seite. Ist die Version neuer, laedt die App die
+// neue ARI.apk von derselben Adresse und startet die Installation (Android fragt einmal "Aktualisieren?").
+const UPDATE_BASE='https://kingshadow1332.github.io/app/';
+let updInfo=null;
+async function appBuild(){try{const i=await Capacitor.Plugins.App.getInfo();return {build:parseInt(i.build,10)||0,version:i.version||''};}catch(e){return null;}}
+async function checkUpdate(manual){
+  if(!NATIVE){if(manual){$('#updText').textContent='Updates gibt es nur in der installierten Android-App. Die Web-App aktualisiert sich beim Neuladen selbst.';}return;}
+  const cur=await appBuild();if(cur){$('#updVer').textContent='VERSION '+cur.version;}
+  try{
+    const r=await fetch(UPDATE_BASE+'version.json?t='+Date.now(),{cache:'no-store'});
+    const d=await r.json();
+    if(cur&&d.versionCode>cur.build){
+      updInfo=d;
+      $('#updBannerVer').textContent='v'+d.versionName;$('#updBannerText').textContent=(d.notes||'Neue Version bereit.')+' (ca. '+(d.sizeMb||6)+' MB)';
+      $('#updBanner').style.display='';$('#updGo').style.display='';$('#updText').textContent='Neue Version '+d.versionName+' ist verfügbar.';
+    }else{updInfo=null;$('#updBanner').style.display='none';$('#updGo').style.display='none';if(manual)$('#updText').textContent='✓ Du hast die neueste Version.';}
+  }catch(e){if(manual)$('#updText').textContent='Update-Suche nicht möglich (kein Internet?).';}
+}
+async function doUpdate(){
+  if(!updInfo)return;const P=Capacitor.Plugins.ApkInstaller;$('#updProg').textContent='Lade …';$('#updBannerText').textContent='Lade Update …';
+  try{
+    P.addListener('progress',e=>{const t='Lade '+e.percent+' %';$('#updProg').textContent=t;$('#updBannerText').textContent=t;});
+    await P.install({url:UPDATE_BASE+(updInfo.apk||'ARI.apk')});
+    $('#updProg').textContent='Installation gestartet – bestätige „Aktualisieren“.';
+  }catch(e){
+    if(String(e&&e.message||e).includes('permission')){$('#updProg').textContent='Erlaube A.R.I einmal „Apps installieren“ in dem Fenster, das sich geöffnet hat – und tippe dann nochmal auf Aktualisieren.';}
+    else $('#updProg').textContent='Fehler: '+(e&&e.message||e);
+  }
+}
+if(NATIVE){$('#updPanel').style.display='';}
+$('#updCheck').onclick=()=>checkUpdate(true);$('#updGo').onclick=doUpdate;$('#updBannerGo').onclick=doUpdate;$('#updBannerLater').onclick=()=>{$('#updBanner').style.display='none';};
+if(NATIVE){setTimeout(()=>checkUpdate(false),1500);setInterval(()=>checkUpdate(false),6*3600*1000);}
 /* ---------- Start ---------- */
 loadSet();
 addMsg('a','Hallo! Ich bin A.R.I – diese App läuft auch ohne PC. '+(cfg.keys[cfg.provider]?'Sag oder tipp mir, was ich tun soll.':'Trage zuerst in den Einstellungen einen KI-Schlüssel ein (oder übernimm die Datei vom PC).'));
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+if('serviceWorker' in navigator&&!NATIVE){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 })();
