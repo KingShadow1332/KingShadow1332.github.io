@@ -1,7 +1,7 @@
 {
-    "version":  1,
-    "name":  "1.0",
+    "version":  2,
+    "name":  "1.1",
     "zip":  "ari-pc.zip",
-    "sha256":  "8a08a87663540ffa9d409c62a45c06bea5c7a48b7a06b97f6a2b306b665ababb",
-    "notes":  "Erste Version mit automatischem Update."
+    "sha256":  "f56e4407af0767ab9c0ac75e6b1bb0419699ea75bfd1265a51b7e99a89c9df7b",
+    "notes":  "Netzwerk-Aktivität: Maus über die Live-Kurve zeigt Uhrzeit und Werte (Download/Upload) an dieser Stelle\nE-Mails: alles außer Werbung wird gemeldet, Code- und Sicherheitsmails (z. B. GitHub-Bestätigungscode) immer\nHandy-Kopplung per QR-Code-Scan in der App möglich\nPatch Notes nach jedem Update"
 }
