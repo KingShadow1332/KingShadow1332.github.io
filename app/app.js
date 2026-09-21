@@ -96,6 +96,8 @@ async function runProvider(p,key,history,small,query){
   }
   return 'Erledigt.';
 }
+function keyList(p){const k=[cfg.keys[p]||''];if(p==='groq')(sync.groqAll||[]).slice(1).forEach(x=>k.push(x));return [...new Set(k.filter(Boolean))];}
+async function runWithKeys(p,keys,h,small,q){let last;for(const k of keys){try{return await runProvider(p,k,h,small,q);}catch(e){last=e;if(!isLimit(e))throw e;}}throw last;}
 const isLimit=e=>e&&(e.status===429||/rate|quota|limit|overload|exhaust/i.test(String(e.message)));
 async function ask(text){
   links=[];
@@ -107,9 +109,9 @@ async function ask(text){
   if(!key)return 'Es ist noch kein KI-Schlüssel eingetragen. Öffne Einstellungen und trage einen Schlüssel ein (z. B. kostenlos bei Groq oder Gemini) – oder übernimm die Einstellungen vom PC.';
   const small=q.split(/\s+/).length<=10&&!COMPLEX.test(q);
   const h=hist.slice(-10);
-  try{return await runProvider(cfg.provider,key,h,small,text);}
+  try{return await runWithKeys(cfg.provider,keyList(cfg.provider),h,small,text);}
   catch(e){
-    if(small&&!isLimit(e)){try{return await runProvider(cfg.provider,key,h,false,text);}catch(e2){e=e2;}}
+    if(small&&!isLimit(e)){try{return await runWithKeys(cfg.provider,keyList(cfg.provider),h,false,text);}catch(e2){e=e2;}}
     if(isLimit(e)&&cfg.fb&&cfg.fbKey&&cfg.fb!==cfg.provider){try{return await runProvider(cfg.fb,cfg.fbKey,h,small,text);}catch(e3){e=e3;}}
     return 'Fehler beim Anbieter ('+cfg.provider+'): '+String(e.message).slice(0,160);
   }
@@ -194,11 +196,12 @@ $('#pcGo').onclick=()=>{
 
 /* ---------- Einstellungen ---------- */
 function loadSet(){
-  $('#sProv').value=cfg.provider;$('#sKey').value=cfg.keys[cfg.provider]||'';$('#sProv2').value=cfg.fb||'';$('#sKey2').value=cfg.fbKey||'';$('#sLang').value=cfg.lang;
+  $('#sProv').value=cfg.provider;$('#sKey').value=cfg.keys[cfg.provider]||'';$('#sProv2').value=cfg.fb||'';$('#sKey2').value=cfg.fbKey||'';$('#sLang').value=cfg.lang;$('#sGroqMore').value=(sync.groqAll||[]).slice(1).join(String.fromCharCode(10));
   $$('#sTts .btn').forEach(b=>b.classList.toggle('on',b.dataset.v===cfg.tts));
 }
 $('#sProv').onchange=()=>{cfg.provider=$('#sProv').value;$('#sKey').value=cfg.keys[cfg.provider]||'';saveCfg();sync.dirtySet=true;saveSync();syncSoon();};
 $('#sKey').onchange=()=>{cfg.keys[cfg.provider]=$('#sKey').value.trim();saveCfg();sync.dirtyKeys=true;saveSync();syncSoon();};
+$('#sGroqMore').onchange=()=>{const more=$('#sGroqMore').value.split(new RegExp("[ "+String.fromCharCode(9,10,13)+",;]+")).map(x=>x.trim()).filter(Boolean);sync.groqAll=[cfg.keys.groq||'',...more];sync.dirtyKeys=true;saveSync();syncSoon();};
 $('#sProv2').onchange=()=>{cfg.fb=$('#sProv2').value;saveCfg();};
 $('#sKey2').onchange=()=>{cfg.fbKey=$('#sKey2').value.trim();saveCfg();};
 $('#sLang').onchange=()=>{cfg.lang=$('#sLang').value;saveCfg();};
@@ -209,7 +212,7 @@ $('#sImport').onchange=async e=>{
   try{
     const s=JSON.parse(await f.text());const k=s.apiKeys||{};
     const groq=(Array.isArray(k.groq)?k.groq:[k.groq]).filter(Boolean)[0]||'';
-    ['anthropic','openai','gemini'].forEach(p=>{if(k[p])cfg.keys[p]=String(k[p]);});if(groq)cfg.keys.groq=String(groq);
+    ['anthropic','openai','gemini'].forEach(p=>{if(k[p])cfg.keys[p]=String(k[p]);});if(groq)cfg.keys.groq=String(groq);{const gl=(Array.isArray(k.groq)?k.groq:[k.groq]).filter(Boolean).map(String);if(gl.length)sync.groqAll=gl;}
     if(PROV[s.provider])cfg.provider=s.provider;
     if(s.language&&s.language!=='auto')cfg.lang=s.language;
     for(const p of ['gemini','groq','openai','anthropic']){if(p!==cfg.provider&&cfg.keys[p]){cfg.fb=p;cfg.fbKey=cfg.keys[p];break;}}
@@ -322,10 +325,28 @@ async function checkUpdate(manual){
     const d=await r.json();
     if(cur&&d.versionCode>cur.build){
       updInfo=d;
-      $('#updBannerVer').textContent='v'+d.versionName;$('#updBannerText').textContent=(d.notes||'Neue Version bereit.')+' (ca. '+(d.sizeMb||6)+' MB)';
+      const nl=(d.notes||'').split('\n').map(s=>s.trim()).filter(Boolean);
+      $('#updBannerVer').textContent='v'+d.versionName;$('#updBannerText').textContent=(nl.length?nl.slice(0,2).join(' · ')+(nl.length>2?' …':''):'Neue Version bereit.')+' (ca. '+(d.sizeMb||6)+' MB)';
+      if(nl.length>2){$('#updBannerText').onclick=()=>showPatchNotes('Neu in '+d.versionName,d.notes);}
       $('#updBanner').style.display='';$('#updGo').style.display='';$('#updText').textContent='Neue Version '+d.versionName+' ist verfügbar.';
-    }else{updInfo=null;$('#updBanner').style.display='none';$('#updGo').style.display='none';if(manual)$('#updText').textContent='✓ Du hast die neueste Version.';}
+    }else{
+      updInfo=null;$('#updBanner').style.display='none';$('#updGo').style.display='none';if(manual)$('#updText').textContent='✓ Du hast die neueste Version.';
+      // Nach einem Update einmalig die Patch Notes der jetzt installierten Version zeigen
+      try{
+        const seen=localStorage.getItem('ari_seen_build');
+        if(cur&&seen!==String(cur.build)){localStorage.setItem('ari_seen_build',String(cur.build));if(seen!==null&&d.versionCode===cur.build&&d.notes)showPatchNotes('Neu in '+d.versionName,d.notes);}
+      }catch(e){}
+    }
   }catch(e){if(manual)$('#updText').textContent='Update-Suche nicht möglich (kein Internet?).';}
+}
+function showPatchNotes(title,notes){
+  const items=(notes||'').split('\n').map(s=>s.trim().replace(/^[-*•]\s*/,'')).filter(Boolean);if(!items.length)return;
+  const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const old=document.getElementById('ariPatchNotes');if(old)old.remove();
+  const o=document.createElement('div');o.id='ariPatchNotes';
+  o.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+  o.innerHTML='<div style="max-width:460px;width:90%;max-height:80vh;overflow:auto;padding:20px 24px;border:1px solid #00d4ff;border-radius:10px;background:#0b1620;color:#dff6ff"><div style="letter-spacing:.2em;font-size:12px;opacity:.7">PATCH NOTES</div><div style="font-size:18px;margin:4px 0 12px">'+esc(title)+'</div><ul style="margin:0 0 16px 18px;padding:0;line-height:1.6;font-size:14px">'+items.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul><button type="button" id="ariPatchOk" style="width:100%;padding:10px;border:1px solid #00d4ff;background:transparent;color:#dff6ff;border-radius:6px">OK</button></div>';
+  document.body.appendChild(o);const close=()=>o.remove();o.querySelector('#ariPatchOk').onclick=close;o.onclick=e=>{if(e.target===o)close();};
 }
 async function doUpdate(){
   if(!updInfo)return;const P=Capacitor.Plugins.ApkInstaller;$('#updProg').textContent='Lade …';$('#updBannerText').textContent='Lade Update …';
@@ -341,6 +362,58 @@ async function doUpdate(){
 if(NATIVE){$('#updPanel').style.display='';}
 $('#updCheck').onclick=()=>checkUpdate(true);$('#updGo').onclick=doUpdate;$('#updBannerGo').onclick=doUpdate;$('#updBannerLater').onclick=()=>{$('#updBanner').style.display='none';};
 if(NATIVE){setTimeout(()=>checkUpdate(false),1500);setInterval(()=>checkUpdate(false),6*3600*1000);}
+/* ---------- QR-Code vom PC scannen ---------- */
+let qrStream=null,qrRaf=0;
+async function qrStart(){
+  $('#qrOv').style.display='flex';$('#qrMsg').textContent='Richte die Kamera auf den QR-Code am PC (Einstellungen → HANDY).';
+  try{qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});}
+  catch(e){qrStop();$('#pcMsg').textContent='Kamera nicht erlaubt (Handy-Einstellungen → Apps → A.R.I → Berechtigungen).';return;}
+  const v=$('#qrVid');v.srcObject=qrStream;await v.play().catch(()=>{});
+  const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});let n=0;
+  const tick=()=>{
+    if(!qrStream)return;
+    if(v.videoWidth&&(n++%3===0)){
+      const sc=Math.min(1,640/v.videoWidth);c.width=Math.round(v.videoWidth*sc);c.height=Math.round(v.videoHeight*sc);x.drawImage(v,0,0,c.width,c.height);
+      const d=x.getImageData(0,0,c.width,c.height),r=window.jsQR&&jsQR(d.data,d.width,d.height);
+      if(r&&r.data){
+        const L=parseLink(r.data),M=/^(https?:[/][/][^/#]+)[/]phone#c=([0-9]{6})/.exec(r.data);
+        if(L||M){qrStop();if(L)pairFromLink(L.origin,L.code);else if(NATIVE)pairFromLink(M[1],M[2]);else $('#pcLink').value=r.data;return;}
+        $('#qrMsg').textContent='Das ist kein A.R.I-QR-Code.';
+      }
+    }
+    qrRaf=requestAnimationFrame(tick);
+  };
+  tick();
+}
+function qrStop(){cancelAnimationFrame(qrRaf);if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null;}$('#qrOv').style.display='none';}
+$('#qrScan').onclick=qrStart;$('#qrClose').onclick=qrStop;
+
+/* ---------- Weckwort im Hintergrund (nur Android-App, optional) ---------- */
+const WK=()=>window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AriWake;
+async function wakeRefresh(){
+  if(!NATIVE||!WK())return;$('#wakePanel').style.display='';
+  try{const s=await WK().status();$('#wakeTag').textContent=s.running?'AN':'AUS';$('#wakeToggle').textContent=s.running?'AUSSCHALTEN':'EINSCHALTEN';
+    $('#wakeMsg').textContent=s.overlay?'':'Tipp: Erlaube „Über anderen Apps“, damit sich A.R.I von selbst nach vorne holen darf.';}catch(e){}
+}
+async function wakeStart(){
+  const SRP=Capacitor.Plugins.SpeechRecognition;
+  try{if(SRP){const p=await SRP.requestPermissions();if(p.speechRecognition!=='granted'){$('#wakeMsg').textContent='Bitte erlaube A.R.I das Mikrofon.';return false;}}}catch(e){}
+  try{await WK().start();return true;}catch(e){$('#wakeMsg').textContent=String(e&&e.message||e)==='mic_permission'?'Bitte erlaube A.R.I das Mikrofon.':'Konnte nicht starten: '+(e&&e.message||e);return false;}
+}
+if(NATIVE&&WK()){
+  $('#wakeToggle').onclick=async()=>{
+    const s=await WK().status();
+    if(s.running){await WK().stop();cfg.wake='0';saveCfg();}
+    else if(await wakeStart()){cfg.wake='1';saveCfg();}
+    wakeRefresh();
+  };
+  $('#wakeOverlay').onclick=()=>WK().openOverlaySettings();
+  // Vom Weckwort geoeffnet -> sofort zuhoeren
+  const wakeCheck=async()=>{try{const r=await WK().consumeWake();if(r&&r.wake){goTab('chat');setTimeout(mic,400);}}catch(e){}};
+  try{Capacitor.Plugins.App.addListener('appStateChange',st=>{if(st.isActive){wakeCheck();wakeRefresh();}});}catch(e){}
+  wakeRefresh();wakeCheck();
+  if(cfg.wake==='1')WK().status().then(s=>{if(!s.running)wakeStart().then(wakeRefresh);});
+}
 /* ---------- Start ---------- */
 loadSet();
 addMsg('a','Hallo! Ich bin A.R.I – diese App läuft auch ohne PC. '+(cfg.keys[cfg.provider]?'Sag oder tipp mir, was ich tun soll.':'Trage zuerst in den Einstellungen einen KI-Schlüssel ein (oder übernimm die Datei vom PC).'));
