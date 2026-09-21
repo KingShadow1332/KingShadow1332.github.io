@@ -1,7 +1,7 @@
 {
-    "versionCode":  2,
-    "versionName":  "1.1",
+    "versionCode":  3,
+    "versionName":  "1.3",
     "apk":  "ARI.apk",
-    "notes":  "Erste Version mit automatischem Update ueber GitHub.",
+    "notes":  "QR-Code vom PC in der App scannen (Kamera) zum Koppeln\nMehrere Groq-Schlüssel: bei erreichtem Limit wechselt A.R.I automatisch zum nächsten (wird mit dem PC abgeglichen)\nOptional in den Einstellungen: im Hintergrund auf das Weckwort A.R.I hören und die App von selbst öffnen\nPlanet kleiner, passt jetzt in die Karte\nPatch Notes nach jedem Update",
     "sizeMb":  5.8
 }
