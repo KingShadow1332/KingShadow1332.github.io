@@ -131,7 +131,15 @@ function refreshReady(){
   if(!$('#orb').classList.contains('busy'))$('#orbState').textContent=ok?'BEREIT · TIPPEN ZUM SPRECHEN':'KI-SCHLÜSSEL FEHLT · EINSTELLUNGEN';
 }
 function orbBusy(b,txt){$('#orb').classList.toggle('busy',b);if(b||txt)$('#orbState').textContent=txt||'DENKT NACH …';else refreshReady();}
-function speak(t){if(cfg.tts!=='1'||!window.speechSynthesis||!t)return;const u=new SpeechSynthesisUtterance(t);u.lang=cfg.lang;speechSynthesis.cancel();speechSynthesis.speak(u);}
+function speakWeb(t){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(t);u.lang=cfg.lang;speechSynthesis.cancel();speechSynthesis.speak(u);}
+// Native Android-Sprachausgabe statt der Browser-Stimme, wenn moeglich: nutzt bevorzugt Samsungs eigene
+// TTS-Engine (klingt natuerlicher), faellt automatisch auf die Web-Stimme zurueck, wenn nicht verfuegbar.
+function speak(t){
+  if(cfg.tts!=='1'||!t)return;
+  const P=NATIVE&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AriTts;
+  if(P){P.speak({text:t,lang:cfg.lang}).catch(()=>speakWeb(t));return;}
+  speakWeb(t);
+}
 async function send(text){
   text=(text||'').trim();if(!text)return;
   addMsg('u',text);hist.push({role:'user',content:text});const w=addMsg('a','…');orbBusy(true);
