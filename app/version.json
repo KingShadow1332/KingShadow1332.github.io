@@ -1,7 +1,7 @@
 {
-    "versionCode":  3,
-    "versionName":  "1.3",
+    "versionCode":  4,
+    "versionName":  "1.4.1",
     "apk":  "ARI.apk",
-    "notes":  "QR-Code vom PC in der App scannen (Kamera) zum Koppeln\nMehrere Groq-Schlüssel: bei erreichtem Limit wechselt A.R.I automatisch zum nächsten (wird mit dem PC abgeglichen)\nOptional in den Einstellungen: im Hintergrund auf das Weckwort A.R.I hören und die App von selbst öffnen\nPlanet kleiner, passt jetzt in die Karte\nPatch Notes nach jedem Update",
+    "notes":  "Fehler behoben: Update von Version 1.3 startete bei manchen Handys nicht richtig\nQR-Code-Link öffnet jetzt zuverlässig die installierte App statt den Browser\nStatus zeigt jetzt korrekt Kein Schlüssel an, wenn noch kein KI-Schlüssel eingetragen ist",
     "sizeMb":  5.8
 }
