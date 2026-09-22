@@ -1,7 +1,7 @@
 {
-    "version":  6,
-    "name":  "1.2.4",
+    "version":  7,
+    "name":  "1.2.5",
     "zip":  "ari-pc.zip",
-    "sha256":  "da40f6220407ce1fabe041162771aa9f894499b56857bdb840c25aa5578938d6",
-    "notes":  "Fehler behoben: das letzte Update wurde fälschlich als unerlaubt abgelehnt (ARI-Setup.exe gehörte da nicht rein)"
+    "sha256":  "2c9bef819dcb65820177dec87e390fdef0f2441f068db339b59fd2459c5051bc",
+    "notes":  "Mails: Werbung wird gefiltert, Absender lassen sich als Spam markieren — gilt dann dauerhaft für PC und Handy"
 }
