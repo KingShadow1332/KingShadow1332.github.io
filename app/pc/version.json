@@ -1,7 +1,7 @@
 {
-    "version":  2,
-    "name":  "1.1",
+    "version":  3,
+    "name":  "1.2.1",
     "zip":  "ari-pc.zip",
-    "sha256":  "f56e4407af0767ab9c0ac75e6b1bb0419699ea75bfd1265a51b7e99a89c9df7b",
-    "notes":  "Netzwerk-Aktivität: Maus über die Live-Kurve zeigt Uhrzeit und Werte (Download/Upload) an dieser Stelle\nE-Mails: alles außer Werbung wird gemeldet, Code- und Sicherheitsmails (z. B. GitHub-Bestätigungscode) immer\nHandy-Kopplung per QR-Code-Scan in der App möglich\nPatch Notes nach jedem Update"
+    "sha256":  "b614790900b2f6f3797bd9fe1897015c02f4bc63cfdfeac26901e9e8aec77235",
+    "notes":  "HANDY-Bereich in den Einstellungen übersichtlicher aufgeteilt (eigene Zeile je Option)\nQR-Code funktioniert jetzt auch ohne Von-unterwegs-Tunnel und öffnet zuverlässig die Handy-App"
 }
