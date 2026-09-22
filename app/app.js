@@ -14,7 +14,7 @@ const saveCfg=()=>{store.set('ari-app-cfg',cfg);try{refreshReady();}catch(e){}};
 const saveBrain=()=>store.set('ari-app-brain',brain);
 
 /* ---------- Tabs / Uhr ---------- */
-function goTab(t){$$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));$$('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));if(t==='brain')renderBrain();if(t==='pc')renderPcs();}
+function goTab(t){$$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));$$('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));if(t==='brain')renderBrain();if(t==='pc')renderPcs();if(t==='cal')loadCalData();}
 $$('nav button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
 setInterval(()=>{const d=new Date();$('#clock').firstChild.nodeValue=d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   $('#clock small').textContent=d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}).toUpperCase();},1000);
@@ -188,6 +188,245 @@ function renderBrain(){
 $('#brSearch').addEventListener('input',renderBrain);
 $('#brAdd').onclick=()=>{const t=$('#brNew').value.trim();if(t.length<4)return;runTool('remember',{text:t,category:'Notizen'});$('#brNew').value='';renderBrain();};
 
+/* ---------- Gehirn 3D-Ansicht (identische Optik/Physik wie am PC-Hub, Daten kommen aus dem lokalen "brain"-Array) ---------- */
+(function brain3D(){
+  const overlay=document.getElementById('brainOverlay');
+  const stage=document.getElementById('brainStage');
+  const canvas=document.getElementById('brainCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const info=document.getElementById('brainInfo');
+  const statsEl=document.getElementById('brainStats');
+  const posCache={};
+  let cats=[],memories=[],nodes=[],edges=[],byId={};
+  let W=0,H=0,dpr=1,raf=0,running=false;
+  let yaw=0.6,pitch=0.25,zoom=1,targetZoom=1;
+  let idleUntil=0,drag=null,hoverNode=null,selected=null,t0=performance.now();
+  let particles=[];
+  const STOP=new Set(['dass','eine','einen','einem','einer','nicht','oder','aber','auch','sind','wird','mein','meine','meiner','dein','habe','haben','wenn','dann','sehr','gerne','immer','mehr','wurde','beim','sich','über','unter']);
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#ff2d78';
+  function rgba(hex,a){let h=hex.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');if(!/^[0-9a-f]{6}$/i.test(h))return `rgba(255,45,120,${a})`;const n=parseInt(h,16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;}
+  let palette=[];
+  function readPalette(){palette=[css('--pink'),css('--cyan'),css('--pink-2')||css('--pink'),css('--cyan-2')||css('--cyan')];}
+  function words(t){return new Set((t.toLowerCase().match(/[a-zäöüß0-9]{5,}/g)||[]).filter(w=>!STOP.has(w)));}
+
+  function build(){
+    readPalette();
+    nodes=[];edges=[];byId={};
+    const core={id:'core',kind:'core',label:'A.R.I',x:0,y:0,z:0,r:15,col:palette[0]};
+    nodes.push(core);
+    const n=cats.length;
+    cats.forEach((c,i)=>{
+      const k=(i+0.5)/n,phi=Math.acos(1-2*k),th=Math.PI*(1+Math.sqrt(5))*i;
+      const R=270;
+      const hub={id:'hub:'+c,kind:'hub',label:c.toUpperCase(),cat:c,r:9,
+        x:R*Math.sin(phi)*Math.cos(th),y:R*Math.cos(phi),z:R*Math.sin(phi)*Math.sin(th),
+        col:palette[(i%2===0)?0:1]};
+      nodes.push(hub);edges.push({a:core,b:hub,w:1});
+    });
+    const hubOf=c=>nodes.find(x=>x.id==='hub:'+c)||nodes[1];
+    const wordSets=new Map();
+    memories.forEach((m)=>{
+      const hub=hubOf(m.cat);
+      const a=Math.random()*Math.PI*2,b=Math.acos(2*Math.random()-1),d=70+Math.random()*90;
+      const node={id:m.id,kind:'mem',label:m.text,m,cat:m.cat,hub,
+        r:4.6+Math.min(3,(m.uses||0)*0.6),col:hub.col,
+        x:hub.x+d*Math.sin(b)*Math.cos(a),y:hub.y+d*Math.cos(b),z:hub.z+d*Math.sin(b)*Math.sin(a)};
+      if(posCache[m.id]&&posCache[m.id].cat===m.cat){Object.assign(node,{x:posCache[m.id].x,y:posCache[m.id].y,z:posCache[m.id].z,fixed:true});}
+      nodes.push(node);byId[m.id]=node;
+      edges.push({a:hub,b:node,w:0.6});
+      wordSets.set(node,words(m.text));
+    });
+    const hubs=nodes.filter(x=>x.kind==='hub');
+    hubs.forEach(a=>{
+      hubs.filter(b=>b!==a).sort((p,q)=>Math.hypot(p.x-a.x,p.y-a.y,p.z-a.z)-Math.hypot(q.x-a.x,q.y-a.y,q.z-a.z)).slice(0,2).forEach(b=>{
+        if(!edges.some(e=>(e.a===a&&e.b===b)||(e.a===b&&e.b===a)))edges.push({a,b,w:0.5,ring:true});
+      });
+    });
+    hubs.forEach(hub=>{
+      const ring=[];
+      for(let i=0;i<20;i++){
+        const a=Math.random()*Math.PI*2,b=Math.acos(2*Math.random()-1),d=45+Math.random()*130;
+        const dn={id:'dust'+hub.cat+i,kind:'dust',r:1.7,col:hub.col,hub,
+          x:hub.x+d*Math.sin(b)*Math.cos(a),y:hub.y+d*Math.cos(b),z:hub.z+d*Math.sin(b)*Math.sin(a)};
+        nodes.push(dn);ring.push(dn);
+        edges.push({a:hub,b:dn,w:0.25,dust:true});
+        if(i>0&&Math.random()<0.7)edges.push({a:ring[i-1],b:dn,w:0.25,dust:true});
+      }
+    });
+    const mems=nodes.filter(x=>x.kind==='mem');
+    for(let i=0;i<mems.length;i++){
+      let links=0;
+      for(let j=i+1;j<mems.length&&links<2;j++){
+        const A=wordSets.get(mems[i]),B=wordSets.get(mems[j]);
+        for(const w of A)if(B.has(w)){edges.push({a:mems[i],b:mems[j],w:0.5,cross:true});links++;break;}
+      }
+    }
+    const movable=mems.filter(n=>!n.fixed);
+    for(let it=0;it<70;it++){
+      for(let i=0;i<movable.length;i++){
+        const p=movable[i];
+        for(let j=i+1;j<movable.length;j++){
+          const q=movable[j];
+          let dx=p.x-q.x,dy=p.y-q.y,dz=p.z-q.z;
+          const d2=dx*dx+dy*dy+dz*dz+1;
+          if(d2>10000)continue;
+          const f=260/d2;
+          dx*=f;dy*=f;dz*=f;
+          p.x+=dx;p.y+=dy;p.z+=dz;q.x-=dx;q.y-=dy;q.z-=dz;
+        }
+        const hx=p.hub.x-p.x,hy=p.hub.y-p.y,hz=p.hub.z-p.z;
+        const hd=Math.sqrt(hx*hx+hy*hy+hz*hz)+0.01,want=100;
+        const k=(hd-want)/hd*0.06;
+        p.x+=hx*k;p.y+=hy*k;p.z+=hz*k;
+      }
+    }
+    mems.forEach(n=>{posCache[n.id]={x:n.x,y:n.y,z:n.z,cat:n.cat};});
+    particles=[];
+    const count=Math.min(40,edges.length);
+    for(let i=0;i<count;i++)particles.push({e:edges[Math.floor(Math.random()*edges.length)],t:Math.random(),s:0.15+Math.random()*0.3});
+    statsEl.innerHTML=`${memories.length} ERINNERUNGEN<br>${cats.length} BEREICHE`;
+  }
+
+  function resize(){dpr=Math.min(2,window.devicePixelRatio||1);W=stage.clientWidth;H=stage.clientHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);}
+  function project(p){
+    const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    let x=p.x*cy-p.z*sy,z=p.x*sy+p.z*cy;
+    let y=p.y*cp-z*sp;z=p.y*sp+z*cp;
+    const persp=700/(700+z);
+    const sc=persp*zoom*Math.min(W,H)/800;
+    p.sx=W/2+x*sc;p.sy=H/2+y*sc;p.sz=z;p.sc=sc;
+  }
+  const stars=Array.from({length:220},()=>({x:(Math.random()-.5)*1200,y:(Math.random()-.5)*1200,z:(Math.random()-.5)*1200,a:Math.random()}));
+  function glow(x,y,r,col,a){
+    const g=ctx.createRadialGradient(x,y,0,x,y,r*3.2);
+    g.addColorStop(0,rgba(col,a));g.addColorStop(0.35,rgba(col,a*0.35));g.addColorStop(1,rgba(col,0));
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*3.2,0,7);ctx.fill();
+  }
+  function focusSet(){
+    if(!selected)return null;
+    const s=new Set([selected]);
+    edges.forEach(e=>{if(e.a===selected)s.add(e.b);if(e.b===selected)s.add(e.a);});
+    if(selected.kind==='mem')s.add(selected.hub);
+    return s;
+  }
+  function frame(now){
+    if(!running)return;
+    raf=requestAnimationFrame(frame);
+    const dt=Math.min(0.05,(now-t0)/1000);t0=now;
+    if(!drag&&now>idleUntil)yaw+=dt*0.12;
+    zoom+=(targetZoom-zoom)*Math.min(1,dt*8);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,W,H);
+    ctx.globalCompositeOperation='lighter';
+    stars.forEach(st=>{project(st);ctx.fillStyle=`rgba(230,236,245,${0.10+0.25*st.a*(1-st.sz/1300)})`;ctx.fillRect(st.sx,st.sy,1.2,1.2);});
+    nodes.forEach(project);
+    const focus=focusSet();
+    edges.forEach(e=>{
+      const on=!focus||(focus.has(e.a)&&focus.has(e.b));
+      const depth=1-Math.max(-1,Math.min(1,(e.a.sz+e.b.sz)/900));
+      const al=(on?0.10+0.32*depth:0.03)*(e.w+0.4)*(e.dust?0.7:1);
+      ctx.strokeStyle=rgba(e.cross?palette[1]:e.a.col,al);
+      ctx.lineWidth=(e.cross||e.dust)?0.6:(e.ring?0.8:1);
+      ctx.beginPath();ctx.moveTo(e.a.sx,e.a.sy);ctx.lineTo(e.b.sx,e.b.sy);ctx.stroke();
+    });
+    particles.forEach(p=>{
+      p.t+=dt*p.s;if(p.t>1){p.t=0;p.e=edges[Math.floor(Math.random()*edges.length)];}
+      if(!p.e)return;
+      const x=p.e.a.sx+(p.e.b.sx-p.e.a.sx)*p.t,y=p.e.a.sy+(p.e.b.sy-p.e.a.sy)*p.t;
+      glow(x,y,1.6,palette[1],0.9);
+    });
+    const order=nodes.slice().sort((a,b)=>b.sz-a.sz);
+    order.forEach(n=>{
+      const dim=focus&&!focus.has(n)?0.25:1;
+      const depth=0.55+0.45*(1-Math.max(-1,Math.min(1,n.sz/400)))/2;
+      let r=n.r*n.sc*(n===hoverNode||n===selected?1.35:1);
+      if(n.kind==='core')r*=1.06;
+      const a=Math.min(1,depth)*dim;
+      if(n.kind==='dust'){glow(n.sx,n.sy,r,n.col,0.5*a);n._r=Math.max(7,r*2.6);return;}
+      glow(n.sx,n.sy,r,n.col,(n.kind==='mem'?0.75:0.95)*a);
+      if(n.kind==='hub'){ctx.strokeStyle=rgba(n.col,0.5*a);ctx.lineWidth=1;ctx.beginPath();ctx.arc(n.sx,n.sy,r*1.5,0,7);ctx.stroke();}
+      ctx.fillStyle=rgba('#ffffff',(n.kind==='mem'?0.7:0.9)*a);
+      ctx.beginPath();ctx.arc(n.sx,n.sy,Math.max(1,r*0.42),0,7);ctx.fill();
+      n._r=Math.max(8,r*1.6);
+    });
+    ctx.globalCompositeOperation='source-over';
+    order.forEach(n=>{
+      const show=(n.kind!=='dust'&&n.kind!=='mem')||n===hoverNode||n===selected||(zoom>1.7&&n.sz<60&&(!focus||focus.has(n)));
+      if(!show)return;
+      const dim=focus&&!focus.has(n)?0.3:1;
+      ctx.font=n.kind==='mem'?'500 11px JetBrains Mono, monospace':'700 '+(n.kind==='core'?13:10)+'px Chakra Petch, sans-serif';
+      let txt=n.kind==='dust'?n.hub.label:n.label;
+      if(n.kind==='mem'&&txt.length>40)txt=txt.slice(0,38)+'…';
+      ctx.fillStyle=rgba(n.kind==='mem'?'#e6ecf5':n.col,0.95*dim);
+      ctx.textAlign='center';
+      ctx.fillText(txt,n.sx,n.sy-n._r-6);
+    });
+  }
+  function pick(mx,my){let best=null,bd=1e9;nodes.forEach(n=>{const d=Math.hypot(n.sx-mx,n.sy-my);if(d<(n._r||14)+6&&d<bd){best=n;bd=d;}});return best;}
+  const pos=ev=>{const r=canvas.getBoundingClientRect();const p=(ev.touches&&ev.touches[0])||ev;return [p.clientX-r.left,p.clientY-r.top];};
+
+  canvas.addEventListener('pointerdown',ev=>{canvas.setPointerCapture(ev.pointerId);const [x,y]=pos(ev);drag={x,y,moved:false};});
+  canvas.addEventListener('pointermove',ev=>{
+    const [x,y]=pos(ev);
+    if(drag){
+      const dx=x-drag.x,dy=y-drag.y;
+      if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;
+      yaw+=dx*0.007;pitch=Math.max(-1.4,Math.min(1.4,pitch+dy*0.007));
+      drag.x=x;drag.y=y;idleUntil=performance.now()+3000;
+    }else{hoverNode=pick(x,y);}
+  });
+  canvas.addEventListener('pointerup',ev=>{
+    const wasClick=drag&&!drag.moved;drag=null;
+    if(wasClick){const [x,y]=pos(ev);select(pick(x,y));}
+    idleUntil=performance.now()+3000;
+  });
+  canvas.addEventListener('wheel',ev=>{ev.preventDefault();targetZoom=Math.max(0.5,Math.min(3.5,targetZoom*(ev.deltaY<0?1.12:1/1.12)));idleUntil=performance.now()+3000;},{passive:false});
+
+  function select(n){
+    if(n&&n.kind==='dust')n=n.hub;
+    selected=n;
+    if(!n||n.kind==='core'){selected=null;info.classList.remove('show');return;}
+    info.classList.add('show');
+    document.getElementById('biCat').textContent=(n.kind==='hub'?'BEREICH · ':'')+(n.cat||'').toUpperCase();
+    if(n.kind==='hub'){
+      const list=memories.filter(m=>m.cat===n.cat);
+      const bt=document.getElementById('biText');
+      bt.innerHTML=list.length?list.map(m=>`<div class="bi-item" data-id="${m.id}">• ${escHtml(m.text)}</div>`).join(''):'Noch nichts gespeichert.';
+      bt.querySelectorAll('.bi-item').forEach(el=>el.addEventListener('click',()=>{if(byId[el.dataset.id])select(byId[el.dataset.id]);}));
+      document.getElementById('biMeta').textContent='';
+      document.getElementById('biDelete').style.display='none';
+    }else{
+      document.getElementById('biText').textContent=n.m.text;
+      document.getElementById('biText').style.cssText='';
+      document.getElementById('biMeta').textContent='GESPEICHERT';
+      document.getElementById('biDelete').style.display='';
+    }
+  }
+
+  function load(){
+    const byC={};brain.forEach(n=>{byC[n.cat]=(byC[n.cat]||0)+1;});
+    cats=Object.keys(byC).sort();
+    if(!cats.length)cats=['Wissen'];
+    memories=brain.map(n=>({id:n.id,cat:n.cat,text:n.text,uses:0}));
+    selected=null;info.classList.remove('show');build();
+  }
+  function open(){
+    overlay.classList.add('open');readPalette();resize();running=true;t0=performance.now();idleUntil=0;
+    load();cancelAnimationFrame(raf);raf=requestAnimationFrame(frame);
+  }
+  function close(){overlay.classList.remove('open');running=false;cancelAnimationFrame(raf);}
+  document.getElementById('brain3dBtn').addEventListener('click',open);
+  document.getElementById('brainClose').addEventListener('click',close);
+  overlay.addEventListener('mousedown',ev=>{if(ev.target===overlay)close();});
+  window.addEventListener('resize',()=>{if(running)resize();});
+  document.getElementById('biDelete').addEventListener('click',()=>{
+    if(!selected||selected.kind!=='mem')return;
+    brain=brain.filter(m=>m!==selected.m);saveBrain();sync.deleted=(sync.deleted||[]).concat(selected.m.text);saveSync();syncSoon();renderBrain();
+    load();
+  });
+})();
+
 /* ---------- PC ---------- */
 function renderPcs(){
   const box=$('#pcSaved');box.textContent='';
@@ -208,6 +447,58 @@ $('#pcGo').onclick=()=>{
     if(!pcs.some(p=>p.url===url)){pcs.push({name:nm,url});store.set('ari-app-pcs',pcs);}}
   location.href=url;
 };
+
+/* ---------- Termine / Benachrichtigungen (kommen vom verbundenen PC, gleiche Karten wie im Hub) ---------- */
+let calCache=null;
+async function loadCalData(){
+  const calList=$('#calList'),mailList=$('#mailList');
+  if(!sync.token||!sync.origin){
+    calList.innerHTML='<li class="termin-empty">Nicht mit dem PC verbunden. Verbinde dich im Tab „PC", dann erscheinen hier Termine und Benachrichtigungen vom PC.</li>';
+    mailList.innerHTML='';$('#calTag').textContent='–';$('#mailTag').textContent='–';return;
+  }
+  $('#calTag').textContent='LÄDT …';$('#mailTag').textContent='LÄDT …';
+  try{
+    const r=await fetch(sync.origin+'/phone/api/data',{headers:{'X-Ari-Token':sync.token}});
+    if(r.status===401){calList.innerHTML='<li class="termin-empty">Kopplung abgelaufen — bitte neu verbinden.</li>';mailList.innerHTML='';return;}
+    calCache=await r.json();
+    renderCalEvents(calCache);renderCalMails(calCache);
+  }catch(e){
+    $('#calTag').textContent='OFFLINE';$('#mailTag').textContent='OFFLINE';
+    if(!calList.children.length)calList.innerHTML='<li class="termin-empty">PC gerade nicht erreichbar.</li>';
+  }
+}
+const CAL_PAL=['#e8c468','#3fa9ff','#b58cff','#5ec8b8','#ff2d78','#39ff9e'];
+function calColor(seed){let h=0;for(const c of String(seed))h=(h*31+c.charCodeAt(0))>>>0;return CAL_PAL[h%CAL_PAL.length];}
+function renderCalEvents(d){
+  const list=$('#calList');
+  if(d.events_error&&!(d.events||[]).length){list.innerHTML='<li class="termin-empty">'+escHtml(d.events_error)+'</li>';$('#calTag').textContent='FEHLER';return;}
+  const ev=(d.events||[]).slice(0,10);
+  $('#calTag').textContent=ev.length?ev.length+' TERMINE':'KEINE TERMINE';
+  if(!ev.length){list.innerHTML='<li class="termin-empty">Keine anstehenden Termine.</li>';return;}
+  list.innerHTML=ev.map(e=>{
+    const start=new Date(e.start),color=calColor(e.title||'?');
+    const fmt=x=>x.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const when=e.allDay?fmt(start):fmt(start)+' · '+start.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    const day=String(start.getDate()).padStart(2,'0'),mon=start.toLocaleDateString('de-DE',{month:'short'}).replace('.','').toUpperCase();
+    const today0=new Date();today0.setHours(0,0,0,0);const start0=new Date(start);start0.setHours(0,0,0,0);
+    const diff=Math.round((start0-today0)/86400000);
+    let rel='',relCls='';
+    if(diff<0){rel='läuft';relCls='today';}else if(diff===0){rel='heute';relCls='today';}else if(diff===1){rel='morgen';relCls='soon';}else if(diff<=7){rel='in '+diff+' Tagen';relCls='soon';}else rel='in '+diff+' Tagen';
+    return `<li class="termin-item" style="--cal-color:${color}"><div class="t-date"><b>${day}</b><span>${escHtml(mon)}</span></div><div class="t-body"><div class="ttitle">${escHtml(e.title||'')}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(when)}</span></span></div>${e.location?`<div class="tsub">📍 ${escHtml(e.location)}</div>`:''}</div><span class="t-rel ${relCls}">${escHtml(rel)}</span></li>`;
+  }).join('');
+}
+function renderCalMails(d){
+  const list=$('#mailList');
+  const mails=(d.mails||[]).slice(0,8);
+  $('#mailTag').textContent=mails.length?mails.length+' NEU':'KEINE';
+  if(!mails.length){list.innerHTML='<li class="termin-empty">Keine wichtigen E-Mails — alles ruhig.</li>';return;}
+  list.innerHTML=mails.map(m=>{
+    const from=String(m.from||'?'),color=calColor(from),initial=(from.replace(/[^A-Za-zÄÖÜäöü0-9]/g,'').charAt(0)||'✉').toUpperCase();
+    return `<li class="termin-item notif-card" style="--cal-color:${color}"><div class="t-date"><b>${escHtml(initial)}</b><span>MAIL</span></div><div class="t-body"><div class="ttitle">${escHtml(from)}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(m.subject||'')}</span></span></div></div></li>`;
+  }).join('');
+}
+function escHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+setInterval(()=>{if(document.getElementById('t-cal').classList.contains('on'))loadCalData();},60000);
 
 /* ---------- Einstellungen ---------- */
 function loadSet(){
@@ -419,7 +710,7 @@ $('#qrScan').onclick=qrStart;$('#qrClose').onclick=qrStop;
 /* ---------- Weckwort im Hintergrund (nur Android-App, optional) ---------- */
 const WK=()=>window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AriWake;
 async function wakeRefresh(){
-  if(!NATIVE||!WK())return;$('#wakePanel').style.display='';
+  if(!NATIVE||!WK())return;$('#wakeSection').style.display='';
   try{const s=await WK().status();$('#wakeTag').textContent=s.running?'AN':'AUS';$('#wakeToggle').textContent=s.running?'AUSSCHALTEN':'EINSCHALTEN';
     $('#wakeMsg').textContent=s.overlay?'':'Tipp: Erlaube „Über anderen Apps“, damit sich A.R.I von selbst nach vorne holen darf.';}catch(e){}
 }
