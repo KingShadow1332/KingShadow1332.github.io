@@ -16,6 +16,24 @@ const saveBrain=()=>store.set('ari-app-brain',brain);
 /* ---------- Tabs / Uhr ---------- */
 function goTab(t){$$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));$$('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));if(t==='brain')renderBrain();if(t==='pc')renderPcs();if(t==='cal')loadCalData();}
 $$('nav button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
+// Wischen zwischen den Reitern (Chat/Termine/Gehirn/PC/Einst.) statt immer unten tippen zu muessen -
+// nur bei ueberwiegend waagerechter Bewegung, damit normales Scrollen in den Listen nicht gestoert wird.
+(function swipeTabs(){
+  const mainEl=document.querySelector('main');if(!mainEl)return;
+  const order=$$('nav button').map(b=>b.dataset.t);
+  let sx=0,sy=0,tracking=false;
+  mainEl.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true;},{passive:true});
+  mainEl.addEventListener('touchend',e=>{
+    if(!tracking)return;tracking=false;
+    const t=e.changedTouches[0];if(!t)return;
+    const dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    const cur=$('nav button.on');if(!cur)return;
+    let i=order.indexOf(cur.dataset.t);
+    i=dx<0?Math.min(order.length-1,i+1):Math.max(0,i-1);
+    goTab(order[i]);
+  },{passive:true});
+})();
 setInterval(()=>{const d=new Date();$('#clock').firstChild.nodeValue=d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   $('#clock small').textContent=d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}).toUpperCase();},1000);
 
@@ -159,7 +177,7 @@ async function nativeMic(){
     const av=await P.available();if(!av.available){addMsg('a','Dieses Handy hat keine Spracherkennung – nutze das Mikrofon deiner Tastatur.');return;}
     const perm=await P.requestPermissions();if(perm.speechRecognition!=='granted'){addMsg('a','Bitte erlaube A.R.I das Mikrofon (Handy-Einstellungen → Apps → A.R.I → Berechtigungen).');return;}
     orbBusy(true,'HÖRT ZU …');
-    const r=await P.start({language:cfg.lang,maxResults:1,prompt:'Sag A.R.I, was er tun soll',partialResults:false,popup:true});
+    const r=await P.start({language:cfg.lang,maxResults:1,prompt:'Sag A.R.I, was er tun soll',partialResults:false,popup:false});
     orbBusy(false);const txt=(r&&r.matches&&r.matches[0])||'';if(txt)send(txt);
   }catch(e){orbBusy(false);}
 }
@@ -494,11 +512,19 @@ function renderCalMails(d){
   if(!mails.length){list.innerHTML='<li class="termin-empty">Keine wichtigen E-Mails — alles ruhig.</li>';return;}
   list.innerHTML=mails.map(m=>{
     const from=String(m.from||'?'),color=calColor(from),initial=(from.replace(/[^A-Za-zÄÖÜäöü0-9]/g,'').charAt(0)||'✉').toUpperCase();
-    return `<li class="termin-item notif-card" style="--cal-color:${color}"><div class="t-date"><b>${escHtml(initial)}</b><span>MAIL</span></div><div class="t-body"><div class="ttitle">${escHtml(from)}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(m.subject||'')}</span></span></div></div></li>`;
+    return `<li class="termin-item notif-card" style="--cal-color:${color}" data-mail-id="${escHtml(m.id||'')}" data-mail-from="${escHtml(from)}"><div class="t-date"><b>${escHtml(initial)}</b><span>MAIL</span></div><div class="t-body"><div class="ttitle">${escHtml(from)}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(m.subject||'')}</span></span></div></div><button type="button" class="notif-dismiss" data-spam="1" title="Als Spam markieren">🚫</button></li>`;
   }).join('');
 }
+$('#mailList').addEventListener('click',async(e)=>{
+  const btn=e.target.closest('[data-spam]');if(!btn)return;
+  const li=btn.closest('[data-mail-id]');const id=li.dataset.mailId,from=li.dataset.mailFrom;
+  li.remove();
+  if(!sync.token||!sync.origin)return;
+  try{await fetch(sync.origin+'/phone/api/spam',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify({id,from})});}catch(err){}
+});
 function escHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 setInterval(()=>{if(document.getElementById('t-cal').classList.contains('on'))loadCalData();},60000);
+
 
 /* ---------- Einstellungen ---------- */
 function loadSet(){
@@ -618,17 +644,6 @@ if(NATIVE){try{const AP=Capacitor.Plugins.App;AP.addListener('appUrlOpen',e=>han
 {const L=parseLink(location.hash);if(L&&!NATIVE&&/android/i.test(navigator.userAgent)){showOpenInApp(L);}else if(L){history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);}
  else if(sync.token){syncStatus('Verbunden mit PC – synchronisiere …');syncNow();}}
 
-/* ---------- Als App installieren ---------- */
-let installEvt=null;
-const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installPanel').style.display='';$('#installBtn').style.display='';});
-$('#installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice;}catch(e){}installEvt=null;$('#installBtn').style.display='none';};
-window.addEventListener('appinstalled',()=>{$('#installPanel').style.display='none';});
-if(!isStandalone()){
-  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  if(ios){$('#installPanel').style.display='';$('#installText').textContent='iPhone/iPad: Tippe unten in Safari auf „Teilen“ (Quadrat mit Pfeil) und dann auf „Zum Home-Bildschirm“. Danach startet A.R.I wie eine App.';}
-  else{setTimeout(()=>{if(!installEvt&&!isStandalone()){$('#installPanel').style.display='';$('#installText').textContent='Android/Chrome: Tippe oben rechts auf das Menü (⋮) und dann auf „App installieren“ bzw. „Zum Startbildschirm hinzufügen“.';}},2500);}
-}
 
 /* ---------- App-Update ueber GitHub (nur in der installierten Android-App) ---------- */
 // Prueft beim Start und alle 6 Stunden version.json neben der App-Seite. Ist die Version neuer, laedt die App die
