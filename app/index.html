@@ -255,7 +255,70 @@ input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix
 .hero-visual{overflow:visible;width:100%}
 .orb-label{top:-5%!important}
 .orb.busy{--wave:1;--glow:.85;--spd:2s;--sweep:2.5s;--sweepOp:.9;--r1:4s;--r2:6s;--r3:8s;--r4:9s}
-.panel.orbpanel{backdrop-filter:none;-webkit-backdrop-filter:none;clip-path:none;overflow:hidden;border-radius:16px;padding:22px 14px 14px;background:linear-gradient(168deg,rgba(38,32,58,.78) 0%,rgba(16,14,26,.9) 58%,rgba(11,10,18,.95) 100%)}
+.panel.orbpanel{backdrop-filter:none;-webkit-backdrop-filter:none;clip-path:none;overflow:hidden;border-radius:16px;padding:22px 14px 14px;background:linear-gradient(168deg,rgba(18,14,28,.85) 0%,rgba(9,8,16,.92) 58%,rgba(5,5,10,.96) 100%)}
+/* ===== TERMINE / BENACHRICHTIGUNGEN (identisch zum PC-Hub) ===== */
+.notif-list,.termin-list{list-style:none;display:flex;flex-direction:column;gap:0;overflow-y:auto;padding-top:10px}
+.termin-item{--cc:var(--cal-color,var(--cyan));position:relative;display:flex;align-items:center;gap:12px;padding:14px 14px 10px 14px;margin-bottom:14px;margin-top:5px;border-radius:14px;overflow:visible;
+  border:1px solid color-mix(in srgb,var(--cc) 26%,transparent);
+  background:linear-gradient(120deg,color-mix(in srgb,var(--cc) 15%,transparent),color-mix(in srgb,var(--cc) 3%,transparent) 70%);background-size:220% 220%;
+  box-shadow:inset 3px 0 0 var(--cc),0 10px 24px -18px color-mix(in srgb,var(--cc) 80%,transparent);
+  animation:terminIn .5s ease both,terminGlow 4.5s ease-in-out .6s infinite,bgDrift 15s ease-in-out infinite}
+@keyframes terminIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes bgDrift{0%,100%{background-position:12% 22%}50%{background-position:88% 62%}}
+@keyframes terminGlow{0%,100%{box-shadow:inset 3px 0 0 var(--cc),0 10px 24px -18px color-mix(in srgb,var(--cc) 80%,transparent)}50%{box-shadow:inset 3px 0 0 var(--cc),0 10px 26px -15px color-mix(in srgb,var(--cc) 55%,transparent)}}
+.termin-item::after{content:'';position:absolute;left:0;top:0;width:90px;height:90px;border-radius:14px 0 60px 0;overflow:hidden;background:radial-gradient(circle at 0% 0%,color-mix(in srgb,var(--cc) 28%,transparent),transparent 70%);pointer-events:none}
+.termin-item .t-date{flex:none;width:44px;height:48px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid color-mix(in srgb,var(--cc) 40%,transparent);background:color-mix(in srgb,var(--cc) 14%,rgba(8,7,14,.6))}
+.termin-item .t-date b{font:700 17px/1 var(--font-display);color:var(--cc)}
+.termin-item .t-date span{font:600 8px/1 var(--font-mono);letter-spacing:.16em;color:var(--text-dim)}
+.termin-item .t-body{flex:1;min-width:0}
+.termin-item .ttitle{font-size:12.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.termin-item .when{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px;min-width:0}
+.termin-item .chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;min-width:0;padding:3px 9px;border-radius:999px;font:600 9px/1 var(--font-mono);letter-spacing:.08em;color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent);border:1px solid color-mix(in srgb,var(--cc) 30%,transparent);white-space:nowrap}
+.termin-item .chip .txt{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.termin-item .chip .dot{width:5px;height:5px;border-radius:50%;background:var(--cc);box-shadow:0 0 6px var(--cc);animation:chipDot 2.6s ease-in-out infinite}
+@keyframes chipDot{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.35)}}
+.termin-item .tsub{margin-top:5px;font-size:9.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.termin-item .t-rel{position:absolute;top:-9px;right:16px;z-index:3;font:700 8.5px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;padding:4px 10px;border-radius:999px;color:var(--cc);
+  background:color-mix(in srgb,#0a0712 78%,var(--cc) 22%);border:1px solid color-mix(in srgb,var(--cc) 45%,transparent);box-shadow:0 4px 12px -4px color-mix(in srgb,var(--cc) 55%,transparent),0 0 0 3px #0a0712}
+.termin-item .t-rel.soon{color:#04121a;background:var(--cc);border-color:var(--cc);animation:relPulse 1.6s ease-in-out infinite}
+.termin-item .t-rel.today{color:#04121a;background:var(--cc);border-color:var(--cc);animation:terminBlink 1.8s ease-in-out infinite}
+@keyframes relPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes terminBlink{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--cc) 60%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
+.termin-item.notif-card{background:linear-gradient(240deg,color-mix(in srgb,var(--cc) 15%,transparent),color-mix(in srgb,var(--cc) 3%,transparent) 70%);
+  box-shadow:inset -3px 0 0 var(--cc),0 10px 24px -18px color-mix(in srgb,var(--cc) 80%,transparent);padding:10px 14px 10px 12px;border-radius:6px 16px 16px 6px}
+.termin-item.notif-card::after{right:auto;left:0;top:auto;bottom:0;border-radius:60px 0 14px 0;background:radial-gradient(circle at 0% 100%,color-mix(in srgb,var(--cc) 28%,transparent),transparent 70%)}
+.termin-item.notif-card .t-date{width:44px;height:44px;border-radius:50%}
+.termin-item.notif-card .t-date b{font-size:17px}
+.termin-item.notif-card .t-date span{font-size:7px;letter-spacing:.2em}
+.termin-empty{margin-top:6px;padding:14px 10px;text-align:center;font-size:10px;letter-spacing:.04em;color:var(--text-dim2);border:1px dashed rgba(255,255,255,.09);border-radius:6px}
+
+/* ===== GEHIRN 3D ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(2,2,6,.78);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9000;padding:14px}
+.modal-overlay.open{display:flex}
+.modal.brain-modal{width:100%;height:88vh;max-width:none;background:var(--panel-bg,#0b0912);border:1px solid var(--panel-border,rgba(255,255,255,.08));border-radius:16px;padding:12px;display:flex;flex-direction:column}
+.brain-modal .modal-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;font:700 12px var(--font-display);letter-spacing:.14em;color:var(--pink)}
+.brain-modal .modal-close{margin-left:auto;background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:4px 8px}
+.brain-stage{position:relative;flex:1 1 auto;min-height:0;border:1px solid var(--panel-border,rgba(255,255,255,.08));border-radius:12px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,rgba(255,45,120,.10),transparent 60%),radial-gradient(ellipse at 50% 100%,rgba(41,211,245,.08),transparent 55%),#050409}
+.brain-stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.brain-hint{position:absolute;left:10px;bottom:8px;font:500 9px/1.4 var(--font-mono);letter-spacing:.06em;color:var(--text-dim2);pointer-events:none}
+.brain-stats{position:absolute;right:10px;top:8px;font:600 9px/1.5 var(--font-mono);letter-spacing:.1em;color:var(--cyan);text-align:right;pointer-events:none}
+.brain-info{position:absolute;left:10px;top:8px;max-width:min(320px,64%);padding:9px 11px;border:1px solid var(--panel-border,rgba(255,255,255,.08));border-radius:10px;background:rgba(8,9,17,.9);display:none}
+.brain-info.show{display:block}
+.brain-info .bi-cat{font:700 9px/1 var(--font-display);letter-spacing:.14em;color:var(--pink);margin-bottom:5px}
+.brain-info .bi-text{font:500 12px/1.4 var(--font-mono);color:var(--text);max-height:min(30vh,240px);overflow-y:auto}
+.brain-info .bi-item{padding:4px 0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06)}
+.brain-info .bi-meta{font:500 9px/1 var(--font-mono);color:var(--text-dim2);margin-top:7px}
+.brain-info .btn{margin-top:7px;padding:5px 9px;font-size:10px;width:auto}
+/* ===== AUFKLAPPBARE ABSCHNITTE (wie am PC) ===== */
+.set-section{border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);margin-bottom:12px;border-radius:10px;background:rgba(255,255,255,.015)}
+.set-section>summary{cursor:pointer;list-style:none;padding:12px 14px;font:700 11px var(--font-mono);letter-spacing:.12em;color:var(--text);display:flex;align-items:center}
+.set-section>summary::-webkit-details-marker{display:none}
+.set-section>summary::after{content:'+';margin-left:auto;color:var(--cyan);font-size:15px;line-height:1}
+.set-section[open]>summary{color:var(--pink);border-bottom:1px solid color-mix(in srgb,var(--pink) 20%,transparent)}
+.set-section[open]>summary::after{content:'−';color:var(--pink)}
+.set-section-body{padding:12px 14px 14px}
+.set-section-body .panel{border:none;background:none;padding:0;margin-bottom:14px}
+.set-section-body .panel:last-child{margin-bottom:0}
 .orbwrap .orb{--glow:.9;--sweepOp:.85}
 .orbwrap .sphere-core{background:radial-gradient(circle at 31% 25%,#fff 0%,#fff0f6 8%,#ffd3e4 16%,var(--pink-2) 28%,#ff6f9c 42%,var(--am) 58%,#d63a76 72%,#8a2358 86%,#3b1233 100%),radial-gradient(circle at 76% 80%,rgba(89,220,240,.2) 0%,transparent 42%);box-shadow:0 0 90px -4px color-mix(in srgb,var(--pink) 65%,transparent),inset -16px -14px 44px rgba(8,4,14,.6),inset 14px 12px 40px rgba(89,220,240,.28)}
 .orbwrap .sphere-shade{background:radial-gradient(circle at 74% 76%,rgba(4,2,10,.45),transparent 66%)}
@@ -423,6 +486,7 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
   <!-- GEHIRN -->
   <section id="t-brain">
     <div class="panel"><div class="panel-h"><span class="ico">✦</span><span class="t">GEHIRN · SPEICHER</span><span class="tag" id="brTag">–</span></div>
+      <button class="btn pri" id="brain3dBtn" style="width:100%;margin-bottom:10px">✦ 3D-ANSICHT ÖFFNEN</button>
       <input type="search" id="brSearch" placeholder="Suchen …" style="margin-bottom:10px">
       <div class="row" style="margin-bottom:10px"><input id="brNew" placeholder="Neue Erinnerung …"><button class="btn pri" id="brAdd" style="flex:0 0 70px">+</button></div>
       <div id="brCats"></div><div id="brList" style="margin-top:6px"></div>
@@ -431,20 +495,45 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
 
   <!-- PC -->
   <section id="t-pc">
-    <div class="panel"><div class="panel-h"><span class="ico">⇄</span><span class="t">SYNCHRONISATION</span><span class="tag" id="syncTag">–</span></div>
-      <div class="dim" id="syncStatus">Nicht mit dem PC verbunden. Öffne den Link aus der A.R.I-Mail (oder füge ihn unten ein) – danach bleiben Gehirn, Einstellungen und API-Schlüssel automatisch auf demselben Stand.</div>
-      <div class="row" style="margin-top:10px"><button class="btn pri" id="syncNow">JETZT SYNCHRONISIEREN</button><button class="btn dng" id="syncOff" style="flex:0 0 96px">TRENNEN</button></div>
+    <details class="set-section" open>
+      <summary>SYNCHRONISATION</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h"><span class="ico">⇄</span><span class="t">SYNCHRONISATION</span><span class="tag" id="syncTag">–</span></div>
+          <div class="dim" id="syncStatus">Nicht mit dem PC verbunden. Öffne den Link aus der A.R.I-Mail (oder füge ihn unten ein) – danach bleiben Gehirn, Einstellungen und API-Schlüssel automatisch auf demselben Stand.</div>
+          <div class="row" style="margin-top:10px"><button class="btn pri" id="syncNow">JETZT SYNCHRONISIEREN</button><button class="btn dng" id="syncOff" style="flex:0 0 96px">TRENNEN</button></div>
+        </div>
+      </div>
+    </details>
+    <details class="set-section" open>
+      <summary>MIT DEM PC VERBINDEN</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h cy"><span class="ico">▣</span><span class="t">MIT DEM PC VERBINDEN</span></div>
+          <div class="dim" style="margin-bottom:10px">Die App läuft ohne PC. Für Bildschirm, Steuerung und Mediensteuerung öffnest du deinen PC – im Heim-WLAN oder unterwegs über den Link, den A.R.I dir per Mail schickt.</div>
+          <div class="set"><label>PC-LINK / ADRESSE</label><input id="pcLink" placeholder="https://….trycloudflare.com/phone#l=… oder http://192.168.…:5000/phone"></div>
+          <button class="btn" id="qrScan" style="width:100%;margin-bottom:8px">▣ QR-CODE VOM PC SCANNEN</button>
+          <button class="btn pri" id="pcGo" style="width:100%">PC ÖFFNEN</button>
+          <div class="dim2" id="pcMsg" style="margin-top:8px"></div>
+          <div id="pcSaved" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </details>
+    <details class="set-section">
+      <summary>SO GEHT'S</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h"><span class="ico">ⓘ</span><span class="t">SO GEHT'S</span></div>
+          <div class="dim">1. Am PC in A.R.I: Einstellungen → HANDY → „Koppelcode erzeugen" (QR-Code scannen oder Adresse öffnen).<br>2. Unterwegs: „Von unterwegs erreichbar" einschalten – A.R.I mailt dir den Link.<br>3. Link hier einfügen und öffnen, oder direkt in der App auf „QR-CODE VOM PC SCANNEN" tippen.</div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- TERMINE / BENACHRICHTIGUNGEN (nur mit PC-Verbindung, kommt von Kalender/Mail am PC) -->
+  <section id="t-cal">
+    <div class="panel"><div class="panel-h"><span class="ico">▦</span><span class="t">TERMINE</span><span class="tag" id="calTag">–</span></div>
+      <ul class="termin-list" id="calList" style="min-height:60px"></ul>
     </div>
-    <div class="panel"><div class="panel-h cy"><span class="ico">▣</span><span class="t">MIT DEM PC VERBINDEN</span></div>
-      <div class="dim" style="margin-bottom:10px">Die App läuft ohne PC. Für Bildschirm, Steuerung und Mediensteuerung öffnest du deinen PC – im Heim-WLAN oder unterwegs über den Link, den A.R.I dir per Mail schickt.</div>
-      <div class="set"><label>PC-LINK / ADRESSE</label><input id="pcLink" placeholder="https://….trycloudflare.com/phone#l=… oder http://192.168.…:5000/phone"></div>
-      <button class="btn" id="qrScan" style="width:100%;margin-bottom:8px">▣ QR-CODE VOM PC SCANNEN</button>
-      <button class="btn pri" id="pcGo" style="width:100%">PC ÖFFNEN</button>
-      <div class="dim2" id="pcMsg" style="margin-top:8px"></div>
-      <div id="pcSaved" style="margin-top:12px"></div>
-    </div>
-    <div class="panel"><div class="panel-h"><span class="ico">ⓘ</span><span class="t">SO GEHT'S</span></div>
-      <div class="dim">1. Am PC in A.R.I: Einstellungen → HANDY → „Koppelcode erzeugen“ (QR-Code scannen oder Adresse öffnen).<br>2. Unterwegs: „Von unterwegs erreichbar“ einschalten – A.R.I mailt dir den Link.<br>3. Link hier einfügen und öffnen.</div>
+    <div class="panel"><div class="panel-h cy"><span class="ico">✉</span><span class="t">BENACHRICHTIGUNGEN</span><span class="tag" id="mailTag">–</span></div>
+      <ul class="termin-list" id="mailList" style="min-height:60px"></ul>
     </div>
   </section>
 
@@ -455,42 +544,81 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
       <div class="row" style="margin-top:10px"><button class="btn" id="updCheck">NACH UPDATES SUCHEN</button><button class="btn pri" id="updGo" style="display:none">JETZT AKTUALISIEREN</button></div>
       <div class="dim2" id="updProg" style="margin-top:8px"></div>
     </div>
-    <div class="panel" id="wakePanel" style="display:none"><div class="panel-h cy"><span class="ico">◉</span><span class="t">IM HINTERGRUND HÖREN</span><span class="tag" id="wakeTag">AUS</span></div>
-      <div class="dim" id="wakeText">Optional: A.R.I lauscht im Hintergrund auf „A.R.I“ und öffnet sich dann von selbst. Dafür läuft eine dauerhafte Benachrichtigung, das Mikrofon ist aktiv und der Akku wird stärker belastet.</div>
-      <div class="row" style="margin-top:10px"><button class="btn pri" id="wakeToggle">EINSCHALTEN</button><button class="btn" id="wakeOverlay">„ÜBER ANDEREN APPS“ ERLAUBEN</button></div>
-      <div class="dim2" id="wakeMsg" style="margin-top:8px"></div>
-    </div>
+    <details class="set-section">
+      <summary>KI-ANBIETER</summary>
+      <div class="set-section-body">
+        <div class="panel">
+          <div class="set"><label>ANBIETER</label><select id="sProv"><option value="groq">Groq</option><option value="gemini">Gemini (Google)</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
+          <div class="set"><label>API-SCHLÜSSEL</label><input id="sKey" type="password" autocomplete="off" placeholder="Schlüssel des gewählten Anbieters"></div>
+          <div class="dim2">Der Schlüssel bleibt nur auf diesem Handy (Browser-Speicher) und geht direkt an den Anbieter – nirgendwo sonst hin.</div>
+          <div class="set" style="margin-top:12px"><label>AUSWEICH-ANBIETER (WENN LIMIT ERREICHT)</label><select id="sProv2"><option value="">keiner</option><option value="gemini">Gemini (Google)</option><option value="groq">Groq</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
+          <div class="set"><label>WEITERE GROQ-SCHLÜSSEL (EINER PRO ZEILE)</label><textarea id="sGroqMore" rows="3" autocomplete="off" spellcheck="false" placeholder="Bei erreichtem Limit wechselt A.R.I automatisch zum nächsten Schlüssel" style="width:100%;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);color:var(--text);border-radius:8px;padding:10px;font:13px var(--font-mono)"></textarea></div>
+          <div class="set"><label>SCHLÜSSEL AUSWEICH-ANBIETER</label><input id="sKey2" type="password" autocomplete="off" placeholder="Schlüssel"></div>
+          <div class="set"><label>SPRACHE</label><select id="sLang"><option value="de-DE">Deutsch</option><option value="en-US">English</option><option value="fr-FR">Français</option><option value="es-ES">Español</option><option value="it-IT">Italiano</option></select></div>
+          <div class="set"><label>ANTWORTEN VORLESEN</label><div class="seg" id="sTts"><button class="btn" data-v="1">AN</button><button class="btn" data-v="0">AUS</button></div></div>
+        </div>
+      </div>
+    </details>
+    <details class="set-section" id="wakeSection" style="display:none">
+      <summary>IM HINTERGRUND HÖREN</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h cy"><span class="ico">◉</span><span class="t">IM HINTERGRUND HÖREN</span><span class="tag" id="wakeTag">AUS</span></div>
+          <div class="dim" id="wakeText">Optional: A.R.I lauscht im Hintergrund auf „A.R.I“ und öffnet sich dann von selbst. Dafür läuft eine dauerhafte Benachrichtigung, das Mikrofon ist aktiv und der Akku wird stärker belastet.</div>
+          <div class="row" style="margin-top:10px"><button class="btn pri" id="wakeToggle">EINSCHALTEN</button><button class="btn" id="wakeOverlay">„ÜBER ANDEREN APPS“ ERLAUBEN</button></div>
+          <div class="dim2" id="wakeMsg" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </details>
     <div class="panel" id="installPanel" style="display:none"><div class="panel-h cy"><span class="ico">⬇</span><span class="t">ALS APP INSTALLIEREN</span></div>
       <div class="dim" id="installText">Installiere A.R.I auf dem Startbildschirm: eigenes Symbol, ohne Browser-Rahmen, startet auch offline.</div>
       <button class="btn pri" id="installBtn" style="width:100%;margin-top:10px;display:none">APP INSTALLIEREN</button>
     </div>
-    <div class="panel"><div class="panel-h"><span class="ico">◉</span><span class="t">KI-ANBIETER</span></div>
-      <div class="set"><label>ANBIETER</label><select id="sProv"><option value="groq">Groq</option><option value="gemini">Gemini (Google)</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
-      <div class="set"><label>API-SCHLÜSSEL</label><input id="sKey" type="password" autocomplete="off" placeholder="Schlüssel des gewählten Anbieters"></div>
-      <div class="dim2">Der Schlüssel bleibt nur auf diesem Handy (Browser-Speicher) und geht direkt an den Anbieter – nirgendwo sonst hin.</div>
-      <div class="set" style="margin-top:12px"><label>AUSWEICH-ANBIETER (WENN LIMIT ERREICHT)</label><select id="sProv2"><option value="">keiner</option><option value="gemini">Gemini (Google)</option><option value="groq">Groq</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
-      <div class="set"><label>WEITERE GROQ-SCHLÜSSEL (EINER PRO ZEILE)</label><textarea id="sGroqMore" rows="3" autocomplete="off" spellcheck="false" placeholder="Bei erreichtem Limit wechselt A.R.I automatisch zum nächsten Schlüssel" style="width:100%;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);color:var(--text);border-radius:8px;padding:10px;font:13px var(--font-mono)"></textarea></div>
-      <div class="set"><label>SCHLÜSSEL AUSWEICH-ANBIETER</label><input id="sKey2" type="password" autocomplete="off" placeholder="Schlüssel"></div>
-      <div class="set"><label>SPRACHE</label><select id="sLang"><option value="de-DE">Deutsch</option><option value="en-US">English</option><option value="fr-FR">Français</option><option value="es-ES">Español</option><option value="it-IT">Italiano</option></select></div>
-      <div class="set"><label>ANTWORTEN VORLESEN</label><div class="seg" id="sTts"><button class="btn" data-v="1">AN</button><button class="btn" data-v="0">AUS</button></div></div>
-    </div>
-    <div class="panel"><div class="panel-h cy"><span class="ico">⇪</span><span class="t">VOM PC ÜBERNEHMEN</span></div>
-      <div class="dim" style="margin-bottom:10px">Am PC in A.R.I unter Einstellungen „EXPORTIEREN“ und die Datei hier auswählen: Anbieter, Schlüssel, Sprache und Farben werden übernommen (die PC-Zugangsdaten für Google/Spotify NICHT).</div>
-      <input type="file" id="sImport" accept="application/json" style="display:none">
-      <button class="btn" id="sImportBtn" style="width:100%">EINSTELLUNGEN-DATEI WÄHLEN</button>
-      <div class="dim2" id="sImportMsg" style="margin-top:8px"></div>
-    </div>
-    <div class="panel"><div class="panel-h"><span class="ico">⏻</span><span class="t">DATEN</span></div>
-      <div class="row"><button class="btn" id="brExport">GEHIRN EXPORT</button><button class="btn" id="brImportBtn">GEHIRN IMPORT</button></div>
-      <input type="file" id="brImport" accept="application/json" style="display:none">
-      <button class="btn dng" id="wipe" style="width:100%;margin-top:10px">ALLE DATEN AUF DIESEM HANDY LÖSCHEN</button>
-    </div>
+    <details class="set-section">
+      <summary>VOM PC ÜBERNEHMEN</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h cy"><span class="ico">⇪</span><span class="t">VOM PC ÜBERNEHMEN</span></div>
+          <div class="dim" style="margin-bottom:10px">Am PC in A.R.I unter Einstellungen „EXPORTIEREN" und die Datei hier auswählen: Anbieter, Schlüssel, Sprache und Farben werden übernommen (die PC-Zugangsdaten für Google/Spotify NICHT).</div>
+          <input type="file" id="sImport" accept="application/json" style="display:none">
+          <button class="btn" id="sImportBtn" style="width:100%">EINSTELLUNGEN-DATEI WÄHLEN</button>
+          <div class="dim2" id="sImportMsg" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </details>
+    <details class="set-section">
+      <summary>DATEN</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h"><span class="ico">⏻</span><span class="t">DATEN</span></div>
+          <div class="row"><button class="btn" id="brExport">GEHIRN EXPORT</button><button class="btn" id="brImportBtn">GEHIRN IMPORT</button></div>
+          <input type="file" id="brImport" accept="application/json" style="display:none">
+          <button class="btn dng" id="wipe" style="width:100%;margin-top:10px">ALLE DATEN AUF DIESEM HANDY LÖSCHEN</button>
+        </div>
+      </div>
+    </details>
   </section>
 </main>
+
+<!-- ===== GEHIRN 3D-ANSICHT (wie am PC-Hub) ===== -->
+<div class="modal-overlay" id="brainOverlay">
+  <div class="modal brain-modal">
+    <div class="modal-h"><span>✦ GEHIRN · 3D-ANSICHT</span><button class="modal-close" id="brainClose">✕</button></div>
+    <div class="brain-stage" id="brainStage">
+      <canvas id="brainCanvas"></canvas>
+      <div class="brain-stats" id="brainStats"></div>
+      <div class="brain-info" id="brainInfo">
+        <div class="bi-cat" id="biCat"></div>
+        <div class="bi-text" id="biText"></div>
+        <div class="bi-meta" id="biMeta"></div>
+        <button class="btn dng" id="biDelete" style="display:none">LÖSCHEN</button>
+      </div>
+      <div class="brain-hint">ZIEHEN = DREHEN · KNEIFEN/RAD = ZOOM · TIPPEN = ÖFFNEN</div>
+    </div>
+  </div>
+</div>
 
 <nav>
   <button data-t="chat" class="on"><b>◉</b>CHAT</button>
   <button data-t="brain"><b>✦</b>GEHIRN</button>
+  <button data-t="cal"><b>▦</b>TERMINE</button>
   <button data-t="pc"><b>▣</b>PC</button>
   <button data-t="set"><b>⚙</b>EINST.</button>
 </nav>
