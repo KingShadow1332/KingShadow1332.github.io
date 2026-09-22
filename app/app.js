@@ -10,7 +10,7 @@ cfg.keys=cfg.keys||{};
 let brain=store.get('ari-app-brain',[]);
 let pcs=store.get('ari-app-pcs',[]);
 const hist=[];
-const saveCfg=()=>store.set('ari-app-cfg',cfg);
+const saveCfg=()=>{store.set('ari-app-cfg',cfg);try{refreshReady();}catch(e){}};
 const saveBrain=()=>store.set('ari-app-brain',brain);
 
 /* ---------- Tabs / Uhr ---------- */
@@ -123,7 +123,14 @@ function addMsg(who,text,lk){
   (lk||[]).forEach(l=>{const a=document.createElement('a');a.className='lk';a.href=l.url;a.target='_blank';a.rel='noopener';a.textContent='↗ '+l.label;d.appendChild(a);});
   $('#log').appendChild(d);$('#log').scrollTop=1e9;return d;
 }
-function orbBusy(b,txt){$('#orb').classList.toggle('busy',b);$('#orbState').textContent=txt||(b?'DENKT NACH …':'BEREIT · TIPPEN ZUM SPRECHEN');}
+// Nur "bereit", wenn wirklich ein KI-Schluessel da ist
+function hasKey(){return !!(cfg.keys[cfg.provider]||(cfg.fb&&cfg.fbKey));}
+function refreshReady(){
+  const ok=hasKey();$('#conn').classList.toggle('on',ok);$('#conn').textContent=ok?'BEREIT':'KEIN SCHLÜSSEL';
+  $('#heroSub').textContent=ok?'SYSTEM ONLINE':'NICHT EINSATZBEREIT';
+  if(!$('#orb').classList.contains('busy'))$('#orbState').textContent=ok?'BEREIT · TIPPEN ZUM SPRECHEN':'KI-SCHLÜSSEL FEHLT · EINSTELLUNGEN';
+}
+function orbBusy(b,txt){$('#orb').classList.toggle('busy',b);if(b||txt)$('#orbState').textContent=txt||'DENKT NACH …';else refreshReady();}
 function speak(t){if(cfg.tts!=='1'||!window.speechSynthesis||!t)return;const u=new SpeechSynthesisUtterance(t);u.lang=cfg.lang;speechSynthesis.cancel();speechSynthesis.speak(u);}
 async function send(text){
   text=(text||'').trim();if(!text)return;
@@ -296,7 +303,20 @@ $('#syncNow').onclick=syncNow;
 $('#syncOff').onclick=()=>{if(!confirm('Synchronisation mit dem PC beenden? (Daten auf dem Handy bleiben.)'))return;sync.token='';sync.origin='';saveSync();syncStatus('Nicht mit dem PC verbunden.');};
 setInterval(()=>{if(!document.hidden)syncNow();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow();});
-{const L=parseLink(location.hash);if(L){history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);}
+/* QR-Link im Handy-Browser: Button, der die installierte A.R.I-App oeffnet (statt im Browser weiterzumachen) */
+function showOpenInApp(L){
+  const ov=document.createElement('div');ov.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9998;padding:16px;background:#0b1620;border-top:1px solid var(--cyan);color:#dff6ff;text-align:center';
+  const link='intent://pair?pc='+encodeURIComponent(L.origin)+'&l='+encodeURIComponent(L.code)+'#Intent;scheme=ari;package=com.ari.assistant;end';
+  ov.innerHTML='<div style="margin-bottom:10px;font-size:14px">Mit der A.R.I-App verbinden?</div><a href="'+link+'" class="btn pri" style="display:block;text-decoration:none;margin-bottom:8px">IN DER A.R.I-APP ÖFFNEN</a><button class="btn" id="stayWeb" style="width:100%">IM BROWSER FORTFAHREN</button>';
+  document.body.appendChild(ov);
+  $('#stayWeb').onclick=()=>{ov.remove();history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);};
+}
+function handleDeepLink(u){
+  try{const x=new URL(String(u).replace(/^ari:[/][/]/,'https://ari.invalid/'));const o=x.searchParams.get('pc'),c=x.searchParams.get('l');
+    if(o&&c){goTab('pc');pairFromLink(o.replace(/[/]+$/,''),c);}}catch(e){}
+}
+if(NATIVE){try{const AP=Capacitor.Plugins.App;AP.addListener('appUrlOpen',e=>handleDeepLink(e.url));AP.getLaunchUrl().then(r=>{if(r&&r.url)handleDeepLink(r.url);}).catch(()=>{});}catch(e){}}
+{const L=parseLink(location.hash);if(L&&!NATIVE&&/android/i.test(navigator.userAgent)){showOpenInApp(L);}else if(L){history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);}
  else if(sync.token){syncStatus('Verbunden mit PC – synchronisiere …');syncNow();}}
 
 /* ---------- Als App installieren ---------- */
@@ -415,6 +435,7 @@ if(NATIVE&&WK()){
   if(cfg.wake==='1')WK().status().then(s=>{if(!s.running)wakeStart().then(wakeRefresh);});
 }
 /* ---------- Start ---------- */
+refreshReady();
 loadSet();
 addMsg('a','Hallo! Ich bin A.R.I – diese App läuft auch ohne PC. '+(cfg.keys[cfg.provider]?'Sag oder tipp mir, was ich tun soll.':'Trage zuerst in den Einstellungen einen KI-Schlüssel ein (oder übernimm die Datei vom PC).'));
 if('serviceWorker' in navigator&&!NATIVE){navigator.serviceWorker.register('sw.js').catch(()=>{});}
