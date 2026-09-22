@@ -1,7 +1,7 @@
 {
-    "versionCode":  5,
-    "versionName":  "1.4.2",
+    "versionCode":  6,
+    "versionName":  "1.5",
     "apk":  "ARI.apk",
-    "notes":  "Sprachausgabe nutzt jetzt bevorzugt Samsungs eigene Stimme (fällt automatisch zurück, falls nicht vorhanden)\nVerbindungs-Ladekreis rund statt oval",
+    "notes":  "Handy-App bekommt jetzt (fast) alles vom PC-Hub: Termine + Benachrichtigungen als eigener Reiter, 3D-Gehirnansicht zum Drehen/Zoomen, aufklappbare Kategorien bei PC/Einstellungen\nHeller/blasser Hintergrund um den Planeten korrigiert\nWICHTIG: Falls QR-Scan oder Mehrfach-Schlüssel fehlen - bitte einmal manuell aktualisieren, dieses Update bringt den neuesten Stand",
     "sizeMb":  5.9
 }
