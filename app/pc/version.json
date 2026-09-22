@@ -1,7 +1,7 @@
 {
-    "version":  3,
-    "name":  "1.2.1",
+    "version":  4,
+    "name":  "1.2.2",
     "zip":  "ari-pc.zip",
-    "sha256":  "b614790900b2f6f3797bd9fe1897015c02f4bc63cfdfeac26901e9e8aec77235",
-    "notes":  "HANDY-Bereich in den Einstellungen übersichtlicher aufgeteilt (eigene Zeile je Option)\nQR-Code funktioniert jetzt auch ohne Von-unterwegs-Tunnel und öffnet zuverlässig die Handy-App"
+    "sha256":  "a2783ed61d50b61586563475b58fbef1bf50389f556cc4fa4147abf8c19cc8e9",
+    "notes":  "Termine: kleine, sanft animierte Karten mit pulsierender Anzeige für baldige Termine, saubere Ausrichtung auch bei längeren Zeitangaben\nNeue kostenlose Sprachausgabe: Microsoft-Edge-Stimmen (Katja, Conrad, Amala) zusätzlich zu Piper\nEinstellungen: einheitliche Kästchen, übersichtlichere Medien-Knöpfe\nEinführung wird beim ersten Start nicht mehr automatisch aufgedrängt (weiter über Einstellungen erreichbar)\nVerbindungs-Ladekreis rund statt oval"
 }
