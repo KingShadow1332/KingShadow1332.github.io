@@ -1,7 +1,7 @@
 {
-    "versionCode":  6,
-    "versionName":  "1.5",
+    "versionCode":  7,
+    "versionName":  "1.5.1",
     "apk":  "ARI.apk",
-    "notes":  "Handy-App bekommt jetzt (fast) alles vom PC-Hub: Termine + Benachrichtigungen als eigener Reiter, 3D-Gehirnansicht zum Drehen/Zoomen, aufklappbare Kategorien bei PC/Einstellungen\nHeller/blasser Hintergrund um den Planeten korrigiert\nWICHTIG: Falls QR-Scan oder Mehrfach-Schlüssel fehlen - bitte einmal manuell aktualisieren, dieses Update bringt den neuesten Stand",
+    "notes":  "Mikrofon: kein Google-Overlay mehr, A.R.I hört direkt zu\nReihenfolge unten: Termine steht jetzt da, wo vorher Gehirn war\nPlanet kleiner und nicht mehr blass\nWischen zwischen den Reitern möglich, nicht nur unten tippen\nMails: Werbung wird gefiltert wie am PC, Absender lassen sich als Spam markieren (gilt dann für PC und Handy)\nAls-App-installieren entfernt",
     "sizeMb":  5.9
 }
