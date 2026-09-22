@@ -1,7 +1,7 @@
 {
-    "version":  5,
-    "name":  "1.2.3",
+    "version":  6,
+    "name":  "1.2.4",
     "zip":  "ari-pc.zip",
-    "sha256":  "9d73aa437ae97ab0f17ad7bd2197dfef650286b174ea47724f1a451a6835275c",
-    "notes":  "Desktop-Icon: Ecken sind jetzt wirklich rund (vorher durch einen Windows-Zwischenschritt wieder eckig/blickdicht)"
+    "sha256":  "da40f6220407ce1fabe041162771aa9f894499b56857bdb840c25aa5578938d6",
+    "notes":  "Fehler behoben: das letzte Update wurde fälschlich als unerlaubt abgelehnt (ARI-Setup.exe gehörte da nicht rein)"
 }
