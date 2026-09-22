@@ -250,12 +250,22 @@ input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix
 .moon-a{box-shadow:0 0 18px var(--cyan-2)}
 .orb-label .name{font-weight:600; letter-spacing:.3em; color:#fff; text-shadow:0 0 26px rgba(255,77,133,.85)}
 .orb-label .state{color:var(--text-dim); letter-spacing:.24em}
-.hero-glow{opacity:.8; filter:blur(10px)}
-.orb{width:min(280px,76vw)!important;height:auto!important;aspect-ratio:1/1;margin:14px auto 8px!important}
+.hero-glow{opacity:.4; filter:blur(38px)}
+.orb{width:min(220px,58vw)!important;height:auto!important;aspect-ratio:1/1;margin:14px auto 8px!important}
 .hero-visual{overflow:visible;width:100%}
 .orb-label{top:-5%!important}
 .orb.busy{--wave:1;--glow:.85;--spd:2s;--sweep:2.5s;--sweepOp:.9;--r1:4s;--r2:6s;--r3:8s;--r4:9s}
 .panel.orbpanel{backdrop-filter:none;-webkit-backdrop-filter:none;clip-path:none;overflow:hidden;border-radius:16px;padding:22px 14px 14px;background:linear-gradient(168deg,rgba(18,14,28,.85) 0%,rgba(9,8,16,.92) 58%,rgba(5,5,10,.96) 100%)}
+/* ===== AUFKLAPPBARE ABSCHNITTE (wie am PC) ===== */
+.set-section{border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);margin-bottom:12px;border-radius:10px;background:rgba(255,255,255,.015)}
+.set-section>summary{cursor:pointer;list-style:none;padding:12px 14px;font:700 11px var(--font-mono);letter-spacing:.12em;color:var(--text);display:flex;align-items:center}
+.set-section>summary::-webkit-details-marker{display:none}
+.set-section>summary::after{content:'+';margin-left:auto;color:var(--cyan);font-size:15px;line-height:1}
+.set-section[open]>summary{color:var(--pink);border-bottom:1px solid color-mix(in srgb,var(--pink) 20%,transparent)}
+.set-section[open]>summary::after{content:'−';color:var(--pink)}
+.set-section-body{padding:12px 14px 14px}
+.set-section-body .panel{border:none;background:none;padding:0;margin-bottom:14px}
+.set-section-body .panel:last-child{margin-bottom:0}
 /* ===== TERMINE / BENACHRICHTIGUNGEN (identisch zum PC-Hub) ===== */
 .notif-list,.termin-list{list-style:none;display:flex;flex-direction:column;gap:0;overflow-y:auto;padding-top:10px}
 .termin-item{--cc:var(--cal-color,var(--cyan));position:relative;display:flex;align-items:center;gap:12px;padding:14px 14px 10px 14px;margin-bottom:14px;margin-top:5px;border-radius:14px;overflow:visible;
@@ -309,16 +319,6 @@ input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px color-mix
 .brain-info .bi-item{padding:4px 0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06)}
 .brain-info .bi-meta{font:500 9px/1 var(--font-mono);color:var(--text-dim2);margin-top:7px}
 .brain-info .btn{margin-top:7px;padding:5px 9px;font-size:10px;width:auto}
-/* ===== AUFKLAPPBARE ABSCHNITTE (wie am PC) ===== */
-.set-section{border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);margin-bottom:12px;border-radius:10px;background:rgba(255,255,255,.015)}
-.set-section>summary{cursor:pointer;list-style:none;padding:12px 14px;font:700 11px var(--font-mono);letter-spacing:.12em;color:var(--text);display:flex;align-items:center}
-.set-section>summary::-webkit-details-marker{display:none}
-.set-section>summary::after{content:'+';margin-left:auto;color:var(--cyan);font-size:15px;line-height:1}
-.set-section[open]>summary{color:var(--pink);border-bottom:1px solid color-mix(in srgb,var(--pink) 20%,transparent)}
-.set-section[open]>summary::after{content:'−';color:var(--pink)}
-.set-section-body{padding:12px 14px 14px}
-.set-section-body .panel{border:none;background:none;padding:0;margin-bottom:14px}
-.set-section-body .panel:last-child{margin-bottom:0}
 .orbwrap .orb{--glow:.9;--sweepOp:.85}
 .orbwrap .sphere-core{background:radial-gradient(circle at 31% 25%,#fff 0%,#fff0f6 8%,#ffd3e4 16%,var(--pink-2) 28%,#ff6f9c 42%,var(--am) 58%,#d63a76 72%,#8a2358 86%,#3b1233 100%),radial-gradient(circle at 76% 80%,rgba(89,220,240,.2) 0%,transparent 42%);box-shadow:0 0 90px -4px color-mix(in srgb,var(--pink) 65%,transparent),inset -16px -14px 44px rgba(8,4,14,.6),inset 14px 12px 40px rgba(89,220,240,.28)}
 .orbwrap .sphere-shade{background:radial-gradient(circle at 74% 76%,rgba(4,2,10,.45),transparent 66%)}
@@ -544,21 +544,6 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
       <div class="row" style="margin-top:10px"><button class="btn" id="updCheck">NACH UPDATES SUCHEN</button><button class="btn pri" id="updGo" style="display:none">JETZT AKTUALISIEREN</button></div>
       <div class="dim2" id="updProg" style="margin-top:8px"></div>
     </div>
-    <details class="set-section">
-      <summary>KI-ANBIETER</summary>
-      <div class="set-section-body">
-        <div class="panel">
-          <div class="set"><label>ANBIETER</label><select id="sProv"><option value="groq">Groq</option><option value="gemini">Gemini (Google)</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
-          <div class="set"><label>API-SCHLÜSSEL</label><input id="sKey" type="password" autocomplete="off" placeholder="Schlüssel des gewählten Anbieters"></div>
-          <div class="dim2">Der Schlüssel bleibt nur auf diesem Handy (Browser-Speicher) und geht direkt an den Anbieter – nirgendwo sonst hin.</div>
-          <div class="set" style="margin-top:12px"><label>AUSWEICH-ANBIETER (WENN LIMIT ERREICHT)</label><select id="sProv2"><option value="">keiner</option><option value="gemini">Gemini (Google)</option><option value="groq">Groq</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
-          <div class="set"><label>WEITERE GROQ-SCHLÜSSEL (EINER PRO ZEILE)</label><textarea id="sGroqMore" rows="3" autocomplete="off" spellcheck="false" placeholder="Bei erreichtem Limit wechselt A.R.I automatisch zum nächsten Schlüssel" style="width:100%;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);color:var(--text);border-radius:8px;padding:10px;font:13px var(--font-mono)"></textarea></div>
-          <div class="set"><label>SCHLÜSSEL AUSWEICH-ANBIETER</label><input id="sKey2" type="password" autocomplete="off" placeholder="Schlüssel"></div>
-          <div class="set"><label>SPRACHE</label><select id="sLang"><option value="de-DE">Deutsch</option><option value="en-US">English</option><option value="fr-FR">Français</option><option value="es-ES">Español</option><option value="it-IT">Italiano</option></select></div>
-          <div class="set"><label>ANTWORTEN VORLESEN</label><div class="seg" id="sTts"><button class="btn" data-v="1">AN</button><button class="btn" data-v="0">AUS</button></div></div>
-        </div>
-      </div>
-    </details>
     <details class="set-section" id="wakeSection" style="display:none">
       <summary>IM HINTERGRUND HÖREN</summary>
       <div class="set-section-body">
@@ -569,10 +554,21 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
         </div>
       </div>
     </details>
-    <div class="panel" id="installPanel" style="display:none"><div class="panel-h cy"><span class="ico">⬇</span><span class="t">ALS APP INSTALLIEREN</span></div>
-      <div class="dim" id="installText">Installiere A.R.I auf dem Startbildschirm: eigenes Symbol, ohne Browser-Rahmen, startet auch offline.</div>
-      <button class="btn pri" id="installBtn" style="width:100%;margin-top:10px;display:none">APP INSTALLIEREN</button>
-    </div>
+    <details class="set-section">
+      <summary>KI-ANBIETER</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h"><span class="ico">◉</span><span class="t">KI-ANBIETER</span></div>
+      <div class="set"><label>ANBIETER</label><select id="sProv"><option value="groq">Groq</option><option value="gemini">Gemini (Google)</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
+      <div class="set"><label>API-SCHLÜSSEL</label><input id="sKey" type="password" autocomplete="off" placeholder="Schlüssel des gewählten Anbieters"></div>
+      <div class="dim2">Der Schlüssel bleibt nur auf diesem Handy (Browser-Speicher) und geht direkt an den Anbieter – nirgendwo sonst hin.</div>
+      <div class="set" style="margin-top:12px"><label>AUSWEICH-ANBIETER (WENN LIMIT ERREICHT)</label><select id="sProv2"><option value="">keiner</option><option value="gemini">Gemini (Google)</option><option value="groq">Groq</option><option value="openai">ChatGPT (OpenAI)</option><option value="anthropic">Claude (Anthropic)</option></select></div>
+      <div class="set"><label>WEITERE GROQ-SCHLÜSSEL (EINER PRO ZEILE)</label><textarea id="sGroqMore" rows="3" autocomplete="off" spellcheck="false" placeholder="Bei erreichtem Limit wechselt A.R.I automatisch zum nächsten Schlüssel" style="width:100%;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--cyan) 22%,transparent);color:var(--text);border-radius:8px;padding:10px;font:13px var(--font-mono)"></textarea></div>
+      <div class="set"><label>SCHLÜSSEL AUSWEICH-ANBIETER</label><input id="sKey2" type="password" autocomplete="off" placeholder="Schlüssel"></div>
+      <div class="set"><label>SPRACHE</label><select id="sLang"><option value="de-DE">Deutsch</option><option value="en-US">English</option><option value="fr-FR">Français</option><option value="es-ES">Español</option><option value="it-IT">Italiano</option></select></div>
+      <div class="set"><label>ANTWORTEN VORLESEN</label><div class="seg" id="sTts"><button class="btn" data-v="1">AN</button><button class="btn" data-v="0">AUS</button></div></div>
+        </div>
+      </div>
+    </details>
     <details class="set-section">
       <summary>VOM PC ÜBERNEHMEN</summary>
       <div class="set-section-body">
@@ -617,8 +613,8 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
 
 <nav>
   <button data-t="chat" class="on"><b>◉</b>CHAT</button>
-  <button data-t="brain"><b>✦</b>GEHIRN</button>
   <button data-t="cal"><b>▦</b>TERMINE</button>
+  <button data-t="brain"><b>✦</b>GEHIRN</button>
   <button data-t="pc"><b>▣</b>PC</button>
   <button data-t="set"><b>⚙</b>EINST.</button>
 </nav>
