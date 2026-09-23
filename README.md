@@ -10,6 +10,15 @@ A.R.I läuft als Command Center auf dem PC und als eigenständige App auf dem Ha
 
 A.R.I sucht beim Start selbst nach neueren Versionen und bietet ein Update per Klick an — nichts hier manuell nachziehen.
 
+## 🐧 Für Linux (Ubuntu/Debian, X11) — ⚠️ ungetestet
+
+1. **[ari-pc.zip herunterladen](https://kingshadow1332.github.io/app/pc/ari-pc.zip)** und entpacken
+2. Im Terminal im entpackten Ordner: `bash linux/install.sh`
+3. Fertig — „A.R.I Assistant“ steht im Programmmenü (und optional auf dem Desktop, mit Icon)
+
+Die Linux-Version wurde noch nicht auf echtem Linux getestet und kann Fehler enthalten. Der Installer richtet Python-Umgebung, benötigte Pakete (xdotool, wmctrl, playerctl …), Starter und auf Wunsch Autostart ein. Optionen: `--with-piper` (lokale Stimme), `--autostart`, `--dir`, `--uninstall`.
+Unter **Wayland** sind Tasten-/Maussteuerung und Bildschirm-Ansicht eingeschränkt — beim Login „Ubuntu on Xorg“ wählen.
+
 ## 📱 Fürs Handy (Android)
 
 1. **[ARI.apk herunterladen](https://kingshadow1332.github.io/app/ARI.apk)**
