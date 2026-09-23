@@ -2,6 +2,6 @@
     "version":  8,
     "name":  "1.3.0",
     "zip":  "ari-pc.zip",
-    "sha256":  "62a641ef5523ad86f446b3ab8745c016919f98c4ad48587ddf131ee6a14bd7be",
-    "notes":  "Neu: Linux-Version (Ubuntu/Debian mit X11) im Ordner linux - UNGETESTET\nInstaller mit Starter, Icon und Autostart"
+    "sha256":  "ef6248c39ccd68885e8d52ca936848eb0dd8e553846f0993ce7c402541d439d5",
+    "notes":  "Neu: Linux-Version (Ubuntu/Debian mit X11) als eigener Download - UNGETESTET\nInstaller mit Starter, Icon und Autostart"
 }
