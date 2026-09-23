@@ -12,7 +12,7 @@ A.R.I sucht beim Start selbst nach neueren Versionen und bietet ein Update per K
 
 ## 🐧 Für Linux (Ubuntu/Debian, X11) — ⚠️ ungetestet
 
-1. **[ari-pc.zip herunterladen](https://kingshadow1332.github.io/app/pc/ari-pc.zip)** und entpacken
+1. **[ari-linux.zip herunterladen](https://kingshadow1332.github.io/app/pc/ari-linux.zip)** und entpacken
 2. Im Terminal im entpackten Ordner: `bash linux/install.sh`
 3. Fertig — „A.R.I Assistant“ steht im Programmmenü (und optional auf dem Desktop, mit Icon)
 
