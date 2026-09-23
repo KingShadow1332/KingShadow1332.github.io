@@ -1,7 +1,7 @@
 {
-    "version":  7,
-    "name":  "1.2.5",
+    "version":  8,
+    "name":  "1.3.0",
     "zip":  "ari-pc.zip",
-    "sha256":  "2c9bef819dcb65820177dec87e390fdef0f2441f068db339b59fd2459c5051bc",
-    "notes":  "Mails: Werbung wird gefiltert, Absender lassen sich als Spam markieren — gilt dann dauerhaft für PC und Handy"
+    "sha256":  "62a641ef5523ad86f446b3ab8745c016919f98c4ad48587ddf131ee6a14bd7be",
+    "notes":  "Neu: Linux-Version (Ubuntu/Debian mit X11) im Ordner linux - UNGETESTET\nInstaller mit Starter, Icon und Autostart"
 }
