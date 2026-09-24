@@ -1,7 +1,7 @@
 {
-    "version":  11,
-    "name":  "1.3.3",
+    "version":  12,
+    "name":  "1.3.4",
     "zip":  "ari-pc.zip",
-    "sha256":  "240a3d56d25e5f3eef003184c92cd1e13a2fca4311181e59238f72b619f052c0",
-    "notes":  "Astro ist jetzt im Tutorial immer dabei: sitzt auf der Tutorial-Kachel, winkt zum Willkommen und reagiert auf die Schritte\nNeue Update-Anzeige mit Ring und Punkten: Laden, Installieren, Neustart - danach laedt A.R.I die Seite von selbst neu\nZuverlaessigerer Neustart nach einem Update (wartet, bis A.R.I wieder da ist)"
+    "sha256":  "a15d250f83bcd0bbb0cb324295186726074f728e401d9fc66fe4f1c5e3265e95",
+    "notes":  "Handy-Anbindung: die Handy-App findet die neue Adresse des PCs jetzt selbst (ueber ntfy), kein Link per Mail mehr noetig\nNeu: optionales Absender-Konto fuer Mails von A.R.I (Einstellungen \u003e Handy)\nTutorial: neue Schritte, um Termine und Mails am Handy ohne PC einzurichten\nWeniger Log-Meldungen im Hub-Fenster"
 }
