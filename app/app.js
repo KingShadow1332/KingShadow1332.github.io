@@ -5,7 +5,7 @@ const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNative
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 
 /* ---------- Zustand ---------- */
-const cfg=Object.assign({provider:'groq',keys:{},fb:'',fbKey:'',lang:'de-DE',tts:'1'},store.get('ari-app-cfg',{}));
+const cfg=Object.assign({provider:'groq',keys:{},fb:'',fbKey:'',lang:'de-DE',tts:'1',pcRoute:'auto'},store.get('ari-app-cfg',{}));
 cfg.keys=cfg.keys||{};
 let brain=store.get('ari-app-brain',[]);
 let pcs=store.get('ari-app-pcs',[]);
@@ -117,12 +117,35 @@ async function runProvider(p,key,history,small,query){
 function keyList(p){const k=[cfg.keys[p]||''];if(p==='groq')(sync.groqAll||[]).slice(1).forEach(x=>k.push(x));return [...new Set(k.filter(Boolean))];}
 async function runWithKeys(p,keys,h,small,q){let last;for(const k of keys){try{return await runProvider(p,k,h,small,q);}catch(e){last=e;if(!isLimit(e))throw e;}}throw last;}
 const isLimit=e=>e&&(e.status===429||/rate|quota|limit|overload|exhaust/i.test(String(e.message)));
+const PC_RE=/\b(pc|rechner|computer|laptop)\b|lautst[aä]rke|\bleiser\b|\blauter\b|\bstumm\b|screenshot|bildschirmfoto|minimier|maximier/i;
+async function askPc(){
+  const ctrl=new AbortController(),to=setTimeout(()=>ctrl.abort(),70000);
+  try{
+    const r=await fetch(sync.origin+'/phone/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify({messages:hist.slice(-10).map(m=>({role:m.role,content:m.content}))}),signal:ctrl.signal});
+    if(r.status===401){sync.token='';saveSync();return {err:'Kopplung abgelaufen – bitte neu koppeln'};}
+    const d=await r.json();
+    if(!r.ok||d.error)return {err:d.error||('Fehler '+r.status)};
+    return {reply:d.reply||'Erledigt.',links:d.links||[]};
+  }catch(e){return {err:e&&e.name==='AbortError'?'keine Antwort':'keine Verbindung'};}
+  finally{clearTimeout(to);}
+}
 async function ask(text){
   links=[];
   const q=text.toLowerCase();
   // Ohne KI: Uhrzeit/Datum
   if(/^(wie spaet|wie spät)( ist es)?\??$|^uhrzeit\??$/.test(q.trim()))return 'Es ist '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr.';
   if(/^(welcher tag|welches datum|den wievielten)/.test(q.trim()))return 'Heute ist '+new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'.';
+  // Befehle an den PC: ueber den gekoppelten Hub ausfuehren (Apps oeffnen, Lautstaerke, Musik, Screenshot ...)
+  const route=cfg.pcRoute||'auto',pcIntent=PC_RE.test(q),paired=!!(sync.token&&sync.origin);
+  if(route!=='off'&&(route==='always'||pcIntent)){
+    if(paired){
+      const r=await askPc();
+      if(r.reply){links=r.links||[];return r.reply;}
+      if(pcIntent)return 'Der PC ist gerade nicht erreichbar ('+r.err+'). Ist er an und online? Sag es nochmal, sobald er da ist.';
+    }else if(pcIntent){
+      return 'Dafür muss die App mit deinem PC verbunden sein. Öffne Einstellungen → Synchronisation und koppel sie mit dem Link aus der A.R.I-Mail.';
+    }
+  }
   const key=cfg.keys[cfg.provider];
   if(!key)return 'Es ist noch kein KI-Schlüssel eingetragen. Öffne Einstellungen und trage einen Schlüssel ein (z. B. kostenlos bei Groq oder Gemini) – oder übernimm die Einstellungen vom PC.';
   const small=q.split(/\s+/).length<=10&&!COMPLEX.test(q);
@@ -530,6 +553,7 @@ setInterval(()=>{if(document.getElementById('t-cal').classList.contains('on'))lo
 function loadSet(){
   $('#sProv').value=cfg.provider;$('#sKey').value=cfg.keys[cfg.provider]||'';$('#sProv2').value=cfg.fb||'';$('#sKey2').value=cfg.fbKey||'';$('#sLang').value=cfg.lang;$('#sGroqMore').value=(sync.groqAll||[]).slice(1).join(String.fromCharCode(10));
   $$('#sTts .btn').forEach(b=>b.classList.toggle('on',b.dataset.v===cfg.tts));
+  $$('#sPc .btn').forEach(b=>b.classList.toggle('on',b.dataset.v===(cfg.pcRoute||'auto')));
 }
 $('#sProv').onchange=()=>{cfg.provider=$('#sProv').value;$('#sKey').value=cfg.keys[cfg.provider]||'';saveCfg();sync.dirtySet=true;saveSync();syncSoon();};
 $('#sKey').onchange=()=>{cfg.keys[cfg.provider]=$('#sKey').value.trim();saveCfg();sync.dirtyKeys=true;saveSync();syncSoon();};
@@ -538,6 +562,7 @@ $('#sProv2').onchange=()=>{cfg.fb=$('#sProv2').value;saveCfg();};
 $('#sKey2').onchange=()=>{cfg.fbKey=$('#sKey2').value.trim();saveCfg();};
 $('#sLang').onchange=()=>{cfg.lang=$('#sLang').value;saveCfg();};
 $$('#sTts .btn').forEach(b=>b.onclick=()=>{cfg.tts=b.dataset.v;saveCfg();loadSet();});
+$$('#sPc .btn').forEach(b=>b.onclick=()=>{cfg.pcRoute=b.dataset.v;saveCfg();loadSet();});
 $('#sImportBtn').onclick=()=>$('#sImport').click();
 $('#sImport').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;const msg=$('#sImportMsg');
