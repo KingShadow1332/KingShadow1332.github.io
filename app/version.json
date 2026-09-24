@@ -1,7 +1,7 @@
 {
-    "versionCode":  8,
-    "versionName":  "1.5.2",
+    "versionCode":  9,
+    "versionName":  "1.5.3",
     "apk":  "ARI.apk",
-    "notes":  "Neu: Befehle an den PC - Saetze mit PC, Rechner, Lautstaerke, Screenshot usw. fuehrt dein PC aus (Einstellungen \u003e Synchronisation \u003e Befehle an den PC)\nTermine, Kalender und Mails bleiben in der App und laufen nicht ueber den PC\nKlare Meldung, wenn der PC nicht erreichbar oder nicht gekoppelt ist",
+    "notes":  "Termine und E-Mails laufen jetzt auch ohne PC: Anmeldung bei Google direkt in der App (Einstellungen \u003e Synchronisation \u003e Google direkt)\nZuletzt geladene Termine und Mails bleiben sichtbar, wenn der PC aus ist\nOptional: Kalender per geheimer iCal-Adresse\nBefehle an den PC bleiben; Termine, Kalender und Mails beantwortet die App selbst",
     "sizeMb":  5.9
 }
