@@ -121,7 +121,7 @@ const PC_RE=/\b(pc|rechner|computer|laptop)\b|lautst[aä]rke|\bleiser\b|\blauter
 async function askPc(){
   const ctrl=new AbortController(),to=setTimeout(()=>ctrl.abort(),70000);
   try{
-    const r=await fetch(sync.origin+'/phone/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify({messages:hist.slice(-10).map(m=>({role:m.role,content:m.content}))}),signal:ctrl.signal});
+    const r=await hubFetch('/phone/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify({messages:hist.slice(-10).map(m=>({role:m.role,content:m.content}))}),signal:ctrl.signal});
     if(r.status===401){sync.token='';saveSync();return {err:'Kopplung abgelaufen – bitte neu koppeln'};}
     const d=await r.json();
     if(!r.ok||d.error)return {err:d.error||('Fehler '+r.status)};
@@ -177,7 +177,10 @@ function orbBusy(b,txt){$('#orb').classList.toggle('busy',b);if(b||txt)$('#orbSt
 function speakWeb(t){if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(t);u.lang=cfg.lang;speechSynthesis.cancel();speechSynthesis.speak(u);}
 // Native Android-Sprachausgabe statt der Browser-Stimme, wenn moeglich: nutzt bevorzugt Samsungs eigene
 // TTS-Engine (klingt natuerlicher), faellt automatisch auf die Web-Stimme zurueck, wenn nicht verfuegbar.
+// Fuer die Sprachausgabe: Emojis, Markdown-Zeichen und Links weglassen (sonst liest die Stimme sie vor)
+function speechClean(t){return String(t||'').replace(/[\p{Extended_Pictographic}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{1F3FB}-\u{1F3FF}\u{E0020}-\u{E007F}]/gu,' ').replace(/https?:\/\/\S+/g,' ').replace(/[*_`#~|]+/g,' ').replace(/\s{2,}/g,' ').trim();}
 function speak(t){
+  t=speechClean(t);
   if(cfg.tts!=='1'||!t)return;
   const P=NATIVE&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AriTts;
   if(P){P.speak({text:t,lang:cfg.lang}).catch(()=>speakWeb(t));return;}
@@ -187,7 +190,7 @@ async function send(text){
   text=(text||'').trim();if(!text)return;
   addMsg('u',text);hist.push({role:'user',content:text});const w=addMsg('a','…');orbBusy(true);
   const reply=await ask(text);
-  w._tx.textContent=reply;(links||[]).forEach(l=>{const a=document.createElement('a');a.className='lk';a.href=l.url;a.target='_blank';a.rel='noopener';a.textContent='↗ '+l.label;w.appendChild(a);});
+  w._tx.textContent=String(reply).replace(/\*\*(.+?)\*\*/g,'$1');(links||[]).forEach(l=>{const a=document.createElement('a');a.className='lk';a.href=l.url;a.target='_blank';a.rel='noopener';a.textContent='↗ '+l.label;w.appendChild(a);});
   hist.push({role:'assistant',content:reply});if(hist.length>20)hist.splice(0,hist.length-20);
   $('#log').scrollTop=1e9;orbBusy(false);speak(reply);
 }
@@ -495,7 +498,8 @@ $('#pcGo').onclick=()=>{
 /*GOOGLE-BEGIN*/
 // Google direkt vom Handy (ohne PC): Anmeldung mit PKCE ueber den System-Browser, Kalender- und Gmail-API selbst abrufen.
 const G_REDIRECT='com.ari.assistant:/oauth2redirect';
-const G_SCOPES='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
+const gMailOn=()=>(cfg.gMail||'1')!=='0';
+const gScopes=()=>'https://www.googleapis.com/auth/calendar.readonly'+(gMailOn()?' https://www.googleapis.com/auth/gmail.readonly':'');
 let gTok=store.get('ari-app-gtok',null);
 const gOn=()=>!!(cfg.gClientId&&gTok&&gTok.refresh);
 const b64u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -505,7 +509,7 @@ async function gStart(){
   const ver=b64u(crypto.getRandomValues(new Uint8Array(48))),st=b64u(crypto.getRandomValues(new Uint8Array(16)));
   const ch=b64u(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ver)));
   store.set('ari-app-gpkce',{ver,st,t:Date.now()});
-  const url='https://accounts.google.com/o/oauth2/v2/auth?'+gForm({client_id:cfg.gClientId,redirect_uri:G_REDIRECT,response_type:'code',scope:G_SCOPES,code_challenge:ch,code_challenge_method:'S256',state:st,access_type:'offline',prompt:'consent'});
+  const url='https://accounts.google.com/o/oauth2/v2/auth?'+gForm({client_id:cfg.gClientId,redirect_uri:G_REDIRECT,response_type:'code',scope:gScopes(),code_challenge:ch,code_challenge_method:'S256',state:st,access_type:'offline',prompt:'consent'});
   $('#gStatus').textContent='Google-Anmeldung wird im Browser geöffnet …';
   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
@@ -528,7 +532,8 @@ async function gHandleRedirect(u){
 async function gAccess(){
   if(!gTok||!gTok.refresh)return null;
   if(gTok.access&&gTok.exp>Date.now()+60000)return gTok.access;
-  const d=await gTokenReq({client_id:cfg.gClientId,refresh_token:gTok.refresh,grant_type:'refresh_token'});
+  let d;try{d=await gTokenReq({client_id:cfg.gClientId,refresh_token:gTok.refresh,grant_type:'refresh_token'});}
+  catch(e){if(/invalid_grant|expired|revoked/i.test(String(e.message))){gTok=null;store.set('ari-app-gtok',null);try{loadSet();}catch(x){}throw new Error('Google-Anmeldung abgelaufen – bitte in den Einstellungen neu anmelden');}throw e;}
   gTok.access=d.access_token;gTok.exp=Date.now()+(d.expires_in||3600)*1000;store.set('ari-app-gtok',gTok);return gTok.access;
 }
 async function gApi(url,retry){
@@ -642,14 +647,14 @@ async function loadCalData(){
   let gErr='';
   if(direct){
     try{fresh.events=await gLoadEvents();calOk=true;}catch(e){gErr=String(e.message);}
-    try{fresh.mails=await gLoadMails();mailOk=true;}catch(e){gErr=gErr||String(e.message);}
+    if(gMailOn()){try{fresh.mails=await gLoadMails();mailOk=true;}catch(e){gErr=gErr||String(e.message);}}
   }
   if(!calOk&&hasIcs){
     try{const r=await fetch(cfg.icsUrl);if(!r.ok)throw new Error('http '+r.status);fresh.events=parseIcs(await r.text());calOk=true;}catch(e){}
   }
-  if(paired&&!(calOk&&mailOk)){
+  if(paired&&!(calOk&&(mailOk||(direct&&!gMailOn())))){
     try{
-      const r=await fetch(sync.origin+'/phone/api/data',{headers:{'X-Ari-Token':sync.token}});
+      const r=await hubFetch('/phone/api/data',{headers:{'X-Ari-Token':sync.token}});
       if(r.status===401)authErr=true;
       else{const d=await r.json();if(!mailOk){fresh.mails=d.mails||[];mailOk=true;}if(!calOk){fresh.events=d.events||[];fresh.events_error=d.events_error;calOk=true;}}
     }catch(e){}
@@ -658,7 +663,7 @@ async function loadCalData(){
   renderCalEvents(calCache||fresh);renderCalMails(calCache||fresh);
   if(!calOk){$('#calTag').textContent=calCache&&calCache.at?'OFFLINE · '+calAgo(calCache.at).toUpperCase():'OFFLINE';if(!(calCache&&(calCache.events||[]).length))calList.innerHTML='<li class="termin-empty">'+(hasIcs?'Kalender-Adresse gerade nicht erreichbar.':'PC gerade nicht erreichbar.')+'</li>';}
   if(paired&&!mailOk){$('#mailTag').textContent=authErr?'NEU KOPPELN':(calCache&&calCache.at?'OFFLINE · '+calAgo(calCache.at).toUpperCase():'OFFLINE');}
-  if(direct&&gErr&&!calOk)$('#calTag').textContent='GOOGLE-FEHLER';
+  if(direct&&gErr&&!calOk)$('#calTag').textContent=/neu anmelden/.test(gErr)?'NEU ANMELDEN':'GOOGLE-FEHLER';
   if(!paired&&!mailOk){$('#mailTag').textContent=(calCache&&(calCache.mails||[]).length)?'STAND '+calAgo(calCache.at).toUpperCase():'–';if(!(calCache&&(calCache.mails||[]).length))mailList.innerHTML='<li class="termin-empty">'+(direct?'E-Mails konnten nicht geladen werden ('+escHtml(gErr)+').':'E-Mails kommen vom verbundenen PC.')+'</li>';}
 }
 const CAL_PAL=['#e8c468','#3fa9ff','#b58cff','#5ec8b8','#ff2d78','#39ff9e'];
@@ -688,7 +693,7 @@ function renderCalMails(d){
   if(!mails.length){list.innerHTML='<li class="termin-empty">Keine wichtigen E-Mails — alles ruhig.</li>';return;}
   list.innerHTML=mails.map(m=>{
     const from=String(m.from||'?'),color=calColor(from),initial=(from.replace(/[^A-Za-zÄÖÜäöü0-9]/g,'').charAt(0)||'✉').toUpperCase();
-    return `<li class="termin-item notif-card" style="--cal-color:${color}" data-mail-id="${escHtml(m.id||'')}" data-mail-from="${escHtml(from)}"><div class="t-date"><b>${escHtml(initial)}</b><span>MAIL</span></div><div class="t-body"><div class="ttitle">${escHtml(from)}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(m.subject||'')}</span></span></div></div><button type="button" class="notif-dismiss" data-spam="1" title="Als Spam markieren">🚫</button></li>`;
+    return `<li class="termin-item notif-card" style="--cal-color:${color}" data-mail-id="${escHtml(m.id||'')}" data-mail-from="${escHtml(from)}"><div class="t-date"><b>${escHtml(initial)}</b><span>MAIL</span></div><div class="t-body"><div class="ttitle">${escHtml(from)}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(m.subject||'')}</span></span></div></div><button type="button" class="notif-dismiss" data-spam="1" title="Als Spam markieren" aria-label="Als Spam markieren"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg></button></li>`;
   }).join('');
 }
 $('#mailList').addEventListener('click',async(e)=>{
@@ -697,7 +702,7 @@ $('#mailList').addEventListener('click',async(e)=>{
   li.remove();
   if(gOn()){const sp=spamList();const k=(li.dataset.mailFrom||'').toLowerCase();if(k&&!sp.includes(k)){sp.push(k);store.set('ari-app-spam',sp.slice(-200));}}
   if(!sync.token||!sync.origin)return;
-  try{await fetch(sync.origin+'/phone/api/spam',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify({id,from})});}catch(err){}
+  try{await hubFetch('/phone/api/spam',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify({id,from})});}catch(err){}
 });
 function escHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 setInterval(()=>{if(document.getElementById('t-cal').classList.contains('on'))loadCalData();},60000);
@@ -711,6 +716,7 @@ function loadSet(){
   $('#sIcs').value=cfg.icsUrl||'';$('#sGid').value=cfg.gClientId||'';
   $('#gStatus').textContent=gOn()?'✓ Bei Google angemeldet – Termine und Mails laufen direkt über Google, ohne PC.':'Nicht angemeldet.';
   $('#gLogout').style.display=gOn()?'':'none';
+  $$('#sGMail .btn').forEach(b=>b.classList.toggle('on',b.dataset.v===(cfg.gMail||'1')));
 }
 $('#sProv').onchange=()=>{cfg.provider=$('#sProv').value;$('#sKey').value=cfg.keys[cfg.provider]||'';saveCfg();sync.dirtySet=true;saveSync();syncSoon();};
 $('#sKey').onchange=()=>{cfg.keys[cfg.provider]=$('#sKey').value.trim();saveCfg();sync.dirtyKeys=true;saveSync();syncSoon();};
@@ -720,6 +726,9 @@ $('#sKey2').onchange=()=>{cfg.fbKey=$('#sKey2').value.trim();saveCfg();};
 $('#sLang').onchange=()=>{cfg.lang=$('#sLang').value;saveCfg();};
 $$('#sTts .btn').forEach(b=>b.onclick=()=>{cfg.tts=b.dataset.v;saveCfg();loadSet();});
 $$('#sPc .btn').forEach(b=>b.onclick=()=>{cfg.pcRoute=b.dataset.v;saveCfg();loadSet();});
+$$('#sGMail .btn').forEach(b=>b.onclick=()=>{cfg.gMail=b.dataset.v;saveCfg();loadSet();});
+$('#gCopyPkg').onclick=()=>{try{navigator.clipboard.writeText('com.ari.assistant');$('#gStatus').textContent='Paketname kopiert.';}catch(e){}};
+$('#gCopySha').onclick=()=>{try{navigator.clipboard.writeText('B6:AF:C9:89:4F:7A:A9:4E:0B:8B:E7:A2:A2:A7:72:D9:0E:B8:2E:48');$('#gStatus').textContent='SHA-1 kopiert.';}catch(e){}};
 $('#sGid').onchange=()=>{cfg.gClientId=$('#sGid').value.trim();saveCfg();};
 $('#gLogin').onclick=()=>{cfg.gClientId=$('#sGid').value.trim();saveCfg();gStart();};
 $('#gLogout').onclick=()=>{gTok=null;store.set('ari-app-gtok',null);calCache=null;store.set('ari-app-caldata',null);loadSet();loadCalData();};
@@ -756,6 +765,22 @@ $('#wipe').onclick=()=>{if(!confirm('Alle Daten dieser App auf diesem Handy lös
 // Die App sendet Daten NUR an den PC, mit dem du sie per Link gekoppelt hast (Geraete-Token).
 let sync=store.get('ari-app-sync',{origin:'',token:'',deleted:[],dirtyKeys:false,dirtySet:false,last:0,groqAll:[],pc:{}});
 const saveSync=()=>store.set('ari-app-sync',sync);
+// Der PC-Tunnel hat bei jedem Start eine neue Adresse. Antwortet der PC nicht, holt sich die App die aktuelle Adresse
+// selbststaendig (der Hub meldet sie unter dem geheimen Themennamen bei ntfy.sh) und versucht es damit noch einmal.
+async function hubResolve(){
+  if(!sync.topic)return false;
+  try{
+    const r=await fetch('https://ntfy.sh/'+encodeURIComponent(sync.topic)+'/json?poll=1&since=24h');
+    const t=await r.text();let url='';
+    t.split('\n').forEach(l=>{try{const m=JSON.parse(l);const x=/^ARI-URL (https:\/\/[a-z0-9-]+\.trycloudflare\.com)$/.exec(String(m.message||''));if(x)url=x[1];}catch(e){}});
+    if(url&&url!==sync.origin){sync.origin=url;saveSync();return true;}
+  }catch(e){}
+  return false;
+}
+async function hubFetch(path,opts){
+  try{return await fetch(sync.origin+path,opts);}
+  catch(e){if(e&&e.name==='AbortError')throw e;if(await hubResolve())return await fetch(sync.origin+path,opts);throw e;}
+}
 const SYNC_TRUSTED=new RegExp('^https:[/][/][a-z0-9-]+[.]trycloudflare[.]com$');
 const LAN_OK=new RegExp('^http:[/][/](192[.]168[.][0-9]+[.][0-9]+|10[.][0-9]+[.][0-9]+[.][0-9]+|172[.](1[6-9]|2[0-9]|3[01])[.][0-9]+[.][0-9]+)(:[0-9]+)?$');
 function syncStatus(t,ok){$('#syncStatus').textContent=t;$('#syncTag').textContent=sync.token?(ok===false?'GETRENNT':'VERBUNDEN'):'–';}
@@ -767,7 +792,7 @@ async function pairFromLink(origin,code){
     const r=await fetch(origin+'/phone/pair',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,name:'Handy-App'})});
     const d=await r.json();
     if(!r.ok||!d.token){syncStatus('Kopplung fehlgeschlagen: '+(d.error||r.status),false);return;}
-    sync.origin=origin;sync.token=d.token;sync.dirtyKeys=false;sync.dirtySet=false;saveSync();
+    sync.origin=origin;sync.token=d.token;sync.topic=d.topic||'';sync.dirtyKeys=false;sync.dirtySet=false;saveSync();
     await syncNow();goTab('pc');
   }catch(e){syncStatus('PC nicht erreichbar (läuft A.R.I und der Tunnel?).',false);}
 }
@@ -786,9 +811,10 @@ async function syncNow(){
   if(!sync.token||!sync.origin||syncBusy)return;syncBusy=true;
   try{
     const body={brain:brain.map(n=>({text:n.text,cat:n.cat})),deleted:sync.deleted||[],settings:pushSettings(),apiKeys:pushKeys()};
-    const r=await fetch(sync.origin+'/phone/api/sync',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify(body)});
+    const r=await hubFetch('/phone/api/sync',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify(body)});
     if(r.status===401){sync.token='';saveSync();syncStatus('Kopplung abgelaufen – bitte den neuen Link aus der A.R.I-Mail öffnen.',false);return;}
     const d=await r.json();
+    if(d.topic&&d.topic!==sync.topic){sync.topic=d.topic;saveSync();}
     // Gehirn: Stand vom PC uebernehmen (enthaelt jetzt auch unsere Ergaenzungen), lokale IDs behalten
     const old=new Map(brain.map(n=>[n.text.toLowerCase(),n]));
     brain=(d.brain||[]).map(n=>{const o=old.get(String(n.text).toLowerCase());return o?Object.assign(o,{cat:n.cat}):{id:Date.now()+Math.random().toString(36).slice(2,6),text:n.text,cat:n.cat,ts:Date.now()};});
@@ -820,10 +846,12 @@ function showOpenInApp(L){
   const link='intent://pair?pc='+encodeURIComponent(L.origin)+'&l='+encodeURIComponent(L.code)+'#Intent;scheme=ari;package=com.ari.assistant;end';
   ov.innerHTML='<div style="margin-bottom:10px;font-size:14px">Mit der A.R.I-App verbinden?</div><a href="'+link+'" class="btn pri" style="display:block;text-decoration:none;margin-bottom:8px">IN DER A.R.I-APP ÖFFNEN</a><button class="btn" id="stayWeb" style="width:100%">IM BROWSER FORTFAHREN</button>';
   document.body.appendChild(ov);
+  setTimeout(()=>{try{location.href=link;}catch(e){}},350);   // gleich versuchen, die App zu oeffnen (manche Browser blockieren das - dann bleibt der Knopf)
   $('#stayWeb').onclick=()=>{ov.remove();history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);};
 }
 function handleDeepLink(u){
   if(/^com\.ari\.assistant:/.test(String(u))){gHandleRedirect(u);return;}
+  {const L=parseLink(String(u));if(L&&/^https:/i.test(String(u))){goTab('pc');pairFromLink(L.origin,L.code);return;}}   // App-Link aus der Mail: https://…/app/#pc=…&l=…
   try{const x=new URL(String(u).replace(/^ari:[/][/]/,'https://ari.invalid/'));const o=x.searchParams.get('pc'),c=x.searchParams.get('l');
     if(o&&c){goTab('pc');pairFromLink(o.replace(/[/]+$/,''),c);}}catch(e){}
 }
