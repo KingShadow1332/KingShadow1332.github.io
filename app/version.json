@@ -1,7 +1,7 @@
 {
-    "versionCode":  10,
-    "versionName":  "1.5.4",
+    "versionCode":  11,
+    "versionName":  "1.5.5",
     "apk":  "ARI.apk",
-    "notes":  "Termine und Mails ueber Google direkt in der App - der PC muss nicht an sein (Einstellungen \u003e Synchronisation \u003e Google direkt)\nLink aus der Mail oeffnet die App direkt und koppelt automatisch\nDie App findet die Adresse des PCs selbst, wenn sie sich aendert\nNeues, dezentes Spam-Symbol; Emojis werden nicht mehr vorgelesen\nZuletzt geladene Termine und Mails bleiben ohne PC sichtbar",
+    "notes":  "Neu: Im Hintergrund laufen (Einstellungen): A.R.I bleibt aktiv, prueft Termine und Mails und meldet neue Mails und anstehende Termine per Benachrichtigung\nKoppeln ohne QR-Code: Adresse und Code eintragen; ein eingefuegter Link koppelt sich sofort von selbst\nQR-Scanner: Kamera-Berechtigung wird ausdruecklich angefragt, klare Fehlermeldungen\nLink aus der Mail oder von der Webseite koppelt automatisch",
     "sizeMb":  5.9
 }
