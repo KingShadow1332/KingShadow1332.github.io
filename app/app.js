@@ -5,7 +5,7 @@ const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNative
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 
 /* ---------- Zustand ---------- */
-const cfg=Object.assign({provider:'groq',keys:{},fb:'',fbKey:'',lang:'de-DE',tts:'1',pcRoute:'auto'},store.get('ari-app-cfg',{}));
+const cfg=Object.assign({provider:'groq',keys:{},fb:'',fbKey:'',lang:'de-DE',tts:'1',pcRoute:'auto',gClientId:'516097970054-g630cvf7uslcoijbvblo4m4pcagamj35.apps.googleusercontent.com'},store.get('ari-app-cfg',{}));
 cfg.keys=cfg.keys||{};
 let brain=store.get('ari-app-brain',[]);
 let pcs=store.get('ari-app-pcs',[]);
@@ -492,23 +492,174 @@ $('#pcGo').onclick=()=>{
 };
 
 /* ---------- Termine / Benachrichtigungen (kommen vom verbundenen PC, gleiche Karten wie im Hub) ---------- */
-let calCache=null;
+/*GOOGLE-BEGIN*/
+// Google direkt vom Handy (ohne PC): Anmeldung mit PKCE ueber den System-Browser, Kalender- und Gmail-API selbst abrufen.
+const G_REDIRECT='com.ari.assistant:/oauth2redirect';
+const G_SCOPES='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
+let gTok=store.get('ari-app-gtok',null);
+const gOn=()=>!!(cfg.gClientId&&gTok&&gTok.refresh);
+const b64u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const gForm=o=>Object.keys(o).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(o[k])).join('&');
+async function gStart(){
+  if(!cfg.gClientId){$('#gStatus').textContent='Bitte zuerst die Client-ID eintragen.';return;}
+  const ver=b64u(crypto.getRandomValues(new Uint8Array(48))),st=b64u(crypto.getRandomValues(new Uint8Array(16)));
+  const ch=b64u(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(ver)));
+  store.set('ari-app-gpkce',{ver,st,t:Date.now()});
+  const url='https://accounts.google.com/o/oauth2/v2/auth?'+gForm({client_id:cfg.gClientId,redirect_uri:G_REDIRECT,response_type:'code',scope:G_SCOPES,code_challenge:ch,code_challenge_method:'S256',state:st,access_type:'offline',prompt:'consent'});
+  $('#gStatus').textContent='Google-Anmeldung wird im Browser geöffnet …';
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+}
+async function gTokenReq(body){
+  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:gForm(body)});
+  const d=await r.json();if(!r.ok||d.error)throw new Error(d.error_description||d.error||('HTTP '+r.status));return d;
+}
+async function gHandleRedirect(u){
+  try{
+    const x=new URL(String(u).replace(/^com\.ari\.assistant:[/]?/,'https://ari.invalid/'));
+    const code=x.searchParams.get('code'),st=x.searchParams.get('state'),err=x.searchParams.get('error');
+    const p=store.get('ari-app-gpkce',null);store.set('ari-app-gpkce',null);
+    if(err){$('#gStatus').textContent='Anmeldung abgebrochen ('+err+').';return;}
+    if(!code||!p||p.st!==st){$('#gStatus').textContent='Anmeldung ungültig – bitte nochmal versuchen.';return;}
+    const d=await gTokenReq({client_id:cfg.gClientId,code,code_verifier:p.ver,redirect_uri:G_REDIRECT,grant_type:'authorization_code'});
+    gTok={access:d.access_token,refresh:d.refresh_token||(gTok&&gTok.refresh)||'',exp:Date.now()+(d.expires_in||3600)*1000};store.set('ari-app-gtok',gTok);
+    loadSet();goTab('cal');
+  }catch(e){$('#gStatus').textContent='Anmeldung fehlgeschlagen: '+String(e.message).slice(0,120);}
+}
+async function gAccess(){
+  if(!gTok||!gTok.refresh)return null;
+  if(gTok.access&&gTok.exp>Date.now()+60000)return gTok.access;
+  const d=await gTokenReq({client_id:cfg.gClientId,refresh_token:gTok.refresh,grant_type:'refresh_token'});
+  gTok.access=d.access_token;gTok.exp=Date.now()+(d.expires_in||3600)*1000;store.set('ari-app-gtok',gTok);return gTok.access;
+}
+async function gApi(url,retry){
+  const t=await gAccess();if(!t)throw new Error('nicht angemeldet');
+  const r=await fetch(url,{headers:{Authorization:'Bearer '+t}});
+  if(r.status===401&&!retry){gTok.exp=0;return gApi(url,true);}
+  if(!r.ok)throw new Error('Google '+r.status);return r.json();
+}
+const gDate=(o)=>{if(!o)return null;if(o.date){const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(o.date);return new Date(+m[1],+m[2]-1,+m[3]);}return new Date(o.dateTime);};
+async function gLoadEvents(){
+  const now=new Date(),from=new Date(now);from.setHours(0,0,0,0);const to=new Date(from.getTime()+90*86400000);
+  const cals=['primary'];
+  try{const cl=await gApi('https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=owner&maxResults=8');
+    (cl.items||[]).forEach(c=>{if(c.selected!==false&&!c.primary&&!/holiday|feiertag/i.test(c.id)&&cals.length<5)cals.push(c.id);});}catch(e){}
+  const all=[];
+  await Promise.all(cals.map(async id=>{
+    try{const d=await gApi('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(id)+'/events?'+gForm({timeMin:from.toISOString(),timeMax:to.toISOString(),singleEvents:'true',orderBy:'startTime',maxResults:'40'}));
+      (d.items||[]).forEach(e=>{if(e.status==='cancelled')return;const s0=gDate(e.start),e0=gDate(e.end);if(!s0)return;
+        all.push({title:e.summary||'(ohne Titel)',start:s0.toISOString(),end:e0?e0.toISOString():'',allDay:!!(e.start&&e.start.date),location:e.location||''});});
+    }catch(e){if(id==='primary')throw e;}
+  }));
+  const seen=new Set();const uniq=all.filter(e=>{const k=e.title+'|'+e.start;if(seen.has(k))return false;seen.add(k);return true;});
+  uniq.sort((a,b)=>new Date(a.start)-new Date(b.start));return uniq.slice(0,40);
+}
+const spamList=()=>store.get('ari-app-spam',[]);
+async function gLoadMails(){
+  const l=await gApi('https://gmail.googleapis.com/gmail/v1/users/me/messages?'+gForm({q:'category:primary is:unread',labelIds:'INBOX',maxResults:'15'}));
+  const spam=spamList().map(x=>x.toLowerCase());
+  const out=await Promise.all((l.messages||[]).map(async m=>{
+    try{const d=await gApi('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject');
+      const H={};((d.payload&&d.payload.headers)||[]).forEach(x=>H[x.name.toLowerCase()]=x.value);
+      const raw=H.from||'?',name=(/^\s*"?([^"<]+?)"?\s*</.exec(raw)||[])[1]||raw.replace(/[<>]/g,'');
+      return {id:m.id,from:name.trim(),addr:raw,subject:H.subject||''};}catch(e){return null;}
+  }));
+  return out.filter(x=>x&&!spam.some(s=>x.addr.toLowerCase().includes(s)||s.includes(x.from.toLowerCase()))).slice(0,10);
+}
+window.__ariG={gStart,gHandleRedirect};
+/*GOOGLE-END*/
+/*ICS-BEGIN*/
+// Google-Kalender direkt (ohne PC): "Geheime Adresse im iCal-Format" einlesen und Serientermine der naechsten 90 Tage ausrechnen
+function parseIcs(txt){
+  txt=String(txt).replace(/\r?\n[ \t]/g,'');
+  const parseDt=(k,v)=>{
+    if(/VALUE=DATE(?!-)/.test(k)||/^\d{8}$/.test(v)){const m=/^(\d{4})(\d\d)(\d\d)/.exec(v);return {d:new Date(+m[1],+m[2]-1,+m[3]),allDay:true};}
+    const m=/^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)?(Z?)/.exec(v);if(!m)return null;
+    const d=m[7]?new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0))):new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
+    return {d,allDay:false};
+  };
+  const raw=[];
+  txt.split('BEGIN:VEVENT').slice(1).forEach(b=>{
+    b=b.split('END:VEVENT')[0];const o={ex:[]};
+    b.split(/\r?\n/).forEach(l=>{
+      const i=l.indexOf(':');if(i<0)return;const k=l.slice(0,i),v=l.slice(i+1),n=k.split(';')[0].toUpperCase();
+      if(n==='SUMMARY')o.title=v.replace(/\\n/g,' ').replace(/\\([,;\\])/g,'$1');
+      else if(n==='LOCATION')o.location=v.replace(/\\n/g,', ').replace(/\\([,;\\])/g,'$1');
+      else if(n==='UID')o.uid=v;
+      else if(n==='STATUS')o.status=v;
+      else if(n==='DTSTART'){const p=parseDt(k,v);if(p){o.start=p.d;o.allDay=p.allDay;}}
+      else if(n==='DTEND'){const p=parseDt(k,v);if(p)o.end=p.d;}
+      else if(n==='RRULE')o.rrule=v;
+      else if(n==='EXDATE'){v.split(',').forEach(x=>{const p=parseDt(k,x);if(p)o.ex.push(p.d.getTime());});}
+      else if(n==='RECURRENCE-ID'){const p=parseDt(k,v);if(p)o.recId=p.d.getTime();}
+    });
+    if(o.start&&o.status!=='CANCELLED')raw.push(o);
+  });
+  const now=new Date(),from=new Date(now);from.setHours(0,0,0,0);const to=new Date(from.getTime()+90*86400000);
+  const overrides=new Set(raw.filter(e=>e.recId!=null).map(e=>e.uid+'|'+e.recId));
+  const out=[];
+  const push=(e,st)=>{const dur=e.end?e.end-e.start:(e.allDay?86400000:0),en=new Date(st.getTime()+dur);if(en>=from&&st<=to)out.push({title:e.title||'(ohne Titel)',start:st.toISOString(),end:en.toISOString(),allDay:!!e.allDay,location:e.location||''});};
+  raw.forEach(e=>{
+    if(e.recId!=null||!e.rrule){push(e,e.start);return;}
+    const R={};e.rrule.split(';').forEach(p=>{const q=p.split('=');R[q[0]]=q[1];});
+    const iv=Math.max(1,+R.INTERVAL||1),cnt=R.COUNT?+R.COUNT:1e9;let until=null;
+    if(R.UNTIL){const p=parseDt('',R.UNTIL.length===8?R.UNTIL:R.UNTIL);if(p)until=p.d.getTime()+(p.allDay?86400000-1:0);}
+    const days={SU:0,MO:1,TU:2,WE:3,TH:4,FR:5,SA:6};
+    const cand=[];const s0=e.start;
+    if(R.FREQ==='DAILY'){for(let i=0;i<800;i++){const d=new Date(s0);d.setDate(d.getDate()+i*iv);cand.push(d);if(d>to)break;}}
+    else if(R.FREQ==='WEEKLY'){
+      const wd=(R.BYDAY?R.BYDAY.split(',').map(x=>days[x.slice(-2)]):[s0.getDay()]).filter(x=>x!=null).sort((a,b)=>a-b);
+      const wk0=new Date(s0);wk0.setDate(wk0.getDate()-wk0.getDay());
+      for(let w=0;w<300;w++){let past=false;wd.forEach(x=>{const d=new Date(wk0);d.setDate(d.getDate()+w*7*iv+x);d.setHours(s0.getHours(),s0.getMinutes(),s0.getSeconds());if(d>=s0)cand.push(d);if(d>to)past=true;});if(past)break;}
+    }
+    else if(R.FREQ==='MONTHLY'){for(let i=0;i<120;i++){const d=new Date(s0);d.setDate(1);d.setMonth(d.getMonth()+i*iv);d.setDate(R.BYMONTHDAY?+R.BYMONTHDAY:s0.getDate());cand.push(d);if(d>to)break;}}
+    else if(R.FREQ==='YEARLY'){for(let i=0;i<20;i++){const d=new Date(s0);d.setFullYear(d.getFullYear()+i*iv);cand.push(d);if(d>to)break;}}
+    else cand.push(s0);
+    let n=0;
+    for(const d of cand){
+      if(n>=cnt)break;n++;
+      if(until!=null&&d.getTime()>until)break;
+      if(e.ex.includes(d.getTime())||overrides.has(e.uid+'|'+d.getTime()))continue;
+      push(e,d);
+    }
+  });
+  out.sort((a,b)=>new Date(a.start)-new Date(b.start));
+  return out.slice(0,40);
+}
+/*ICS-END*/
+let calCache=store.get('ari-app-caldata',null);
+function calAgo(t){const m=Math.round((Date.now()-t)/60000);return m<1?'gerade eben':m<60?'vor '+m+' Min.':m<1440?'vor '+Math.round(m/60)+' Std.':'vor '+Math.round(m/1440)+' Tg.';}
 async function loadCalData(){
   const calList=$('#calList'),mailList=$('#mailList');
-  if(!sync.token||!sync.origin){
-    calList.innerHTML='<li class="termin-empty">Nicht mit dem PC verbunden. Verbinde dich im Tab „PC", dann erscheinen hier Termine und Benachrichtigungen vom PC.</li>';
-    mailList.innerHTML='';$('#calTag').textContent='–';$('#mailTag').textContent='–';return;
+  const paired=!!(sync.token&&sync.origin),hasIcs=!!(cfg.icsUrl),direct=gOn();
+  if(calCache&&(calCache.events||calCache.mails)){renderCalEvents(calCache);renderCalMails(calCache);}   // sofort zeigen, was zuletzt geladen wurde
+  if(!paired&&!hasIcs&&!direct&&!(calCache&&calCache.at)){
+    calList.innerHTML='<li class="termin-empty">Melde dich in den Einstellungen bei Google an – dann laufen Termine und Mails ganz ohne PC. Oder verbinde dich im Tab „PC".</li>';
+    mailList.innerHTML='<li class="termin-empty">Noch nicht bei Google angemeldet.</li>';$('#calTag').textContent='–';$('#mailTag').textContent='–';return;
   }
-  $('#calTag').textContent='LÄDT …';$('#mailTag').textContent='LÄDT …';
-  try{
-    const r=await fetch(sync.origin+'/phone/api/data',{headers:{'X-Ari-Token':sync.token}});
-    if(r.status===401){calList.innerHTML='<li class="termin-empty">Kopplung abgelaufen — bitte neu verbinden.</li>';mailList.innerHTML='';return;}
-    calCache=await r.json();
-    renderCalEvents(calCache);renderCalMails(calCache);
-  }catch(e){
-    $('#calTag').textContent='OFFLINE';$('#mailTag').textContent='OFFLINE';
-    if(!calList.children.length)calList.innerHTML='<li class="termin-empty">PC gerade nicht erreichbar.</li>';
+  $('#calTag').textContent='LÄDT …';if(paired)$('#mailTag').textContent='LÄDT …';
+  const fresh={events:calCache&&calCache.events||[],mails:calCache&&calCache.mails||[],at:calCache&&calCache.at||0};
+  let calOk=false,mailOk=false,authErr=false;
+  let gErr='';
+  if(direct){
+    try{fresh.events=await gLoadEvents();calOk=true;}catch(e){gErr=String(e.message);}
+    try{fresh.mails=await gLoadMails();mailOk=true;}catch(e){gErr=gErr||String(e.message);}
   }
+  if(!calOk&&hasIcs){
+    try{const r=await fetch(cfg.icsUrl);if(!r.ok)throw new Error('http '+r.status);fresh.events=parseIcs(await r.text());calOk=true;}catch(e){}
+  }
+  if(paired&&!(calOk&&mailOk)){
+    try{
+      const r=await fetch(sync.origin+'/phone/api/data',{headers:{'X-Ari-Token':sync.token}});
+      if(r.status===401)authErr=true;
+      else{const d=await r.json();if(!mailOk){fresh.mails=d.mails||[];mailOk=true;}if(!calOk){fresh.events=d.events||[];fresh.events_error=d.events_error;calOk=true;}}
+    }catch(e){}
+  }
+  if(calOk||mailOk){fresh.at=Date.now();calCache=fresh;store.set('ari-app-caldata',{events:fresh.events,mails:fresh.mails,at:fresh.at});}
+  renderCalEvents(calCache||fresh);renderCalMails(calCache||fresh);
+  if(!calOk){$('#calTag').textContent=calCache&&calCache.at?'OFFLINE · '+calAgo(calCache.at).toUpperCase():'OFFLINE';if(!(calCache&&(calCache.events||[]).length))calList.innerHTML='<li class="termin-empty">'+(hasIcs?'Kalender-Adresse gerade nicht erreichbar.':'PC gerade nicht erreichbar.')+'</li>';}
+  if(paired&&!mailOk){$('#mailTag').textContent=authErr?'NEU KOPPELN':(calCache&&calCache.at?'OFFLINE · '+calAgo(calCache.at).toUpperCase():'OFFLINE');}
+  if(direct&&gErr&&!calOk)$('#calTag').textContent='GOOGLE-FEHLER';
+  if(!paired&&!mailOk){$('#mailTag').textContent=(calCache&&(calCache.mails||[]).length)?'STAND '+calAgo(calCache.at).toUpperCase():'–';if(!(calCache&&(calCache.mails||[]).length))mailList.innerHTML='<li class="termin-empty">'+(direct?'E-Mails konnten nicht geladen werden ('+escHtml(gErr)+').':'E-Mails kommen vom verbundenen PC.')+'</li>';}
 }
 const CAL_PAL=['#e8c468','#3fa9ff','#b58cff','#5ec8b8','#ff2d78','#39ff9e'];
 function calColor(seed){let h=0;for(const c of String(seed))h=(h*31+c.charCodeAt(0))>>>0;return CAL_PAL[h%CAL_PAL.length];}
@@ -544,6 +695,7 @@ $('#mailList').addEventListener('click',async(e)=>{
   const btn=e.target.closest('[data-spam]');if(!btn)return;
   const li=btn.closest('[data-mail-id]');const id=li.dataset.mailId,from=li.dataset.mailFrom;
   li.remove();
+  if(gOn()){const sp=spamList();const k=(li.dataset.mailFrom||'').toLowerCase();if(k&&!sp.includes(k)){sp.push(k);store.set('ari-app-spam',sp.slice(-200));}}
   if(!sync.token||!sync.origin)return;
   try{await fetch(sync.origin+'/phone/api/spam',{method:'POST',headers:{'Content-Type':'application/json','X-Ari-Token':sync.token},body:JSON.stringify({id,from})});}catch(err){}
 });
@@ -556,6 +708,9 @@ function loadSet(){
   $('#sProv').value=cfg.provider;$('#sKey').value=cfg.keys[cfg.provider]||'';$('#sProv2').value=cfg.fb||'';$('#sKey2').value=cfg.fbKey||'';$('#sLang').value=cfg.lang;$('#sGroqMore').value=(sync.groqAll||[]).slice(1).join(String.fromCharCode(10));
   $$('#sTts .btn').forEach(b=>b.classList.toggle('on',b.dataset.v===cfg.tts));
   $$('#sPc .btn').forEach(b=>b.classList.toggle('on',b.dataset.v===(cfg.pcRoute||'auto')));
+  $('#sIcs').value=cfg.icsUrl||'';$('#sGid').value=cfg.gClientId||'';
+  $('#gStatus').textContent=gOn()?'✓ Bei Google angemeldet – Termine und Mails laufen direkt über Google, ohne PC.':'Nicht angemeldet.';
+  $('#gLogout').style.display=gOn()?'':'none';
 }
 $('#sProv').onchange=()=>{cfg.provider=$('#sProv').value;$('#sKey').value=cfg.keys[cfg.provider]||'';saveCfg();sync.dirtySet=true;saveSync();syncSoon();};
 $('#sKey').onchange=()=>{cfg.keys[cfg.provider]=$('#sKey').value.trim();saveCfg();sync.dirtyKeys=true;saveSync();syncSoon();};
@@ -565,6 +720,10 @@ $('#sKey2').onchange=()=>{cfg.fbKey=$('#sKey2').value.trim();saveCfg();};
 $('#sLang').onchange=()=>{cfg.lang=$('#sLang').value;saveCfg();};
 $$('#sTts .btn').forEach(b=>b.onclick=()=>{cfg.tts=b.dataset.v;saveCfg();loadSet();});
 $$('#sPc .btn').forEach(b=>b.onclick=()=>{cfg.pcRoute=b.dataset.v;saveCfg();loadSet();});
+$('#sGid').onchange=()=>{cfg.gClientId=$('#sGid').value.trim();saveCfg();};
+$('#gLogin').onclick=()=>{cfg.gClientId=$('#sGid').value.trim();saveCfg();gStart();};
+$('#gLogout').onclick=()=>{gTok=null;store.set('ari-app-gtok',null);calCache=null;store.set('ari-app-caldata',null);loadSet();loadCalData();};
+$('#sIcs').onchange=()=>{cfg.icsUrl=$('#sIcs').value.trim();saveCfg();calCache=null;store.set('ari-app-caldata',null);loadCalData();};
 $('#sImportBtn').onclick=()=>$('#sImport').click();
 $('#sImport').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;const msg=$('#sImportMsg');
@@ -664,6 +823,7 @@ function showOpenInApp(L){
   $('#stayWeb').onclick=()=>{ov.remove();history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);};
 }
 function handleDeepLink(u){
+  if(/^com\.ari\.assistant:/.test(String(u))){gHandleRedirect(u);return;}
   try{const x=new URL(String(u).replace(/^ari:[/][/]/,'https://ari.invalid/'));const o=x.searchParams.get('pc'),c=x.searchParams.get('l');
     if(o&&c){goTab('pc');pairFromLink(o.replace(/[/]+$/,''),c);}}catch(e){}
 }
