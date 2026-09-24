@@ -1,7 +1,7 @@
 {
-    "version":  12,
-    "name":  "1.3.4",
+    "version":  13,
+    "name":  "1.3.5",
     "zip":  "ari-pc.zip",
-    "sha256":  "a15d250f83bcd0bbb0cb324295186726074f728e401d9fc66fe4f1c5e3265e95",
-    "notes":  "Handy-Anbindung: die Handy-App findet die neue Adresse des PCs jetzt selbst (ueber ntfy), kein Link per Mail mehr noetig\nNeu: optionales Absender-Konto fuer Mails von A.R.I (Einstellungen \u003e Handy)\nTutorial: neue Schritte, um Termine und Mails am Handy ohne PC einzurichten\nWeniger Log-Meldungen im Hub-Fenster"
+    "sha256":  "1eba65dc6ab8bdb7f556b3f9e78ad8bfe40ae000eaccca54a9d240f96f3b2fe6",
+    "notes":  "Deine gespeicherte Mail-Adresse wird im HUD nicht mehr im Klartext angezeigt\nKopplung mit dem Handy: Links koppeln sich jetzt von selbst\nKleine Fehlerbehebungen"
 }
