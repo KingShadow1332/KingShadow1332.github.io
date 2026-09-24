@@ -1,7 +1,7 @@
 {
-    "versionCode":  7,
-    "versionName":  "1.5.1",
+    "versionCode":  8,
+    "versionName":  "1.5.2",
     "apk":  "ARI.apk",
-    "notes":  "Mikrofon: kein Google-Overlay mehr, A.R.I hört direkt zu\nReihenfolge unten: Termine steht jetzt da, wo vorher Gehirn war\nPlanet kleiner und nicht mehr blass\nWischen zwischen den Reitern möglich, nicht nur unten tippen\nMails: Werbung wird gefiltert wie am PC, Absender lassen sich als Spam markieren (gilt dann für PC und Handy)\nAls-App-installieren entfernt",
+    "notes":  "Neu: Befehle an den PC - Saetze mit PC, Rechner, Lautstaerke, Screenshot usw. fuehrt dein PC aus (Einstellungen \u003e Synchronisation \u003e Befehle an den PC)\nKlare Meldung, wenn der PC nicht erreichbar oder nicht gekoppelt ist",
     "sizeMb":  5.9
 }
