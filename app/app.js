@@ -481,10 +481,22 @@ function renderPcs(){
     const del=document.createElement('button');del.className='btn dng';del.style.flex='0 0 52px';del.textContent='✕';del.onclick=()=>{pcs.splice(i,1);store.set('ari-app-pcs',pcs);renderPcs();};
     r.append(go,del);box.appendChild(r);});
 }
+// Ohne QR-Code: PC-Adresse + Koppelcode von Hand eintragen
+$('#pcPair').onclick=()=>{
+  let a=$('#pcAddr').value.trim(),c=$('#pcCode').value.replace(/[\s-]/g,'');
+  const msg=$('#pcMsg');
+  if(!a||!c){msg.textContent='Bitte Adresse und Koppelcode eintragen.';return;}
+  if(!/^https?:\/\//i.test(a))a=(/trycloudflare\.com|\.[a-z]{2,}$/i.test(a)&&!/^\d+\.\d+\.\d+\.\d+/.test(a)?'https://':'http://')+a;
+  let u;try{u=new URL(a);}catch(e){msg.textContent='Ungültige Adresse.';return;}
+  if(!u.port&&u.protocol==='http:')u.port='5000';
+  msg.textContent='Koppeln …';$('#pcCode').value='';
+  pairFromLink(u.origin,c);
+};
+// Link einfuegen -> koppelt sich sofort von allein (kein extra Knopf noetig)
+$('#pcLink').addEventListener('input',()=>{const A=parseAnyLink($('#pcLink').value);if(A){$('#pcLink').value='';$('#pcMsg').textContent='Koppeln …';pairFromLink(A.origin,A.code);}});
 $('#pcGo').onclick=()=>{
   let v=$('#pcLink').value.trim();if(!v){$('#pcMsg').textContent='Bitte Link oder Adresse einfügen.';return;}
-  {const L=parseLink(v);if(L){$('#pcLink').value='';pairFromLink(L.origin,L.code);return;}}
-  {const M=/^(https?:[/][/][^/#]+)[/]phone#c=([0-9]{6})/.exec(v);if(M&&NATIVE){$('#pcLink').value='';pairFromLink(M[1],M[2]);return;}}
+  {const A=parseAnyLink(v);if(A){$('#pcLink').value='';pairFromLink(A.origin,A.code);return;}}
   if(!/^https?:\/\//i.test(v))v='http://'+v;
   let u;try{u=new URL(v);}catch(e){$('#pcMsg').textContent='Ungültige Adresse.';return;}
   if(!/\/phone/.test(u.pathname))u.pathname=u.pathname.replace(/\/$/,'')+'/phone';
@@ -796,6 +808,13 @@ async function pairFromLink(origin,code){
     await syncNow();goTab('pc');
   }catch(e){syncStatus('PC nicht erreichbar (läuft A.R.I und der Tunnel?).',false);}
 }
+// Erkennt jede Art von Kopplungs-Link: App-Link (…/app/#pc=…&l=…), Tunnel-Link (…trycloudflare.com/phone#l=…) und Adresse mit 6-stelligem Code (…/phone#c=…)
+function parseAnyLink(str){
+  const v=String(str||'').trim();
+  const L=parseLink(v);if(L)return L;
+  if(NATIVE){const M=/^(https?:[/][/][^/#\s]+)[/]phone#[cl]=([A-Za-z0-9_-]{6,})/.exec(v);if(M)return {origin:M[1].replace(/[/]+$/,''),code:M[2]};}
+  return null;
+}
 function parseLink(str){
   const m=/pc=([^&]+)&l=([A-Za-z0-9_-]+)/.exec(str||'');if(!m)return null;
   let o;try{o=decodeURIComponent(m[1]);}catch(e){return null;}return {origin:o.replace(/\/+$/,''),code:m[2]};
@@ -846,12 +865,14 @@ function showOpenInApp(L){
   const link='intent://pair?pc='+encodeURIComponent(L.origin)+'&l='+encodeURIComponent(L.code)+'#Intent;scheme=ari;package=com.ari.assistant;end';
   ov.innerHTML='<div style="margin-bottom:10px;font-size:14px">Mit der A.R.I-App verbinden?</div><a href="'+link+'" class="btn pri" style="display:block;text-decoration:none;margin-bottom:8px">IN DER A.R.I-APP ÖFFNEN</a><button class="btn" id="stayWeb" style="width:100%">IM BROWSER FORTFAHREN</button>';
   document.body.appendChild(ov);
-  setTimeout(()=>{try{location.href=link;}catch(e){}},350);   // gleich versuchen, die App zu oeffnen (manche Browser blockieren das - dann bleibt der Knopf)
+  setTimeout(()=>{try{location.href=link;}catch(e){}},350);
+  // Oeffnet sich die App nicht (nicht installiert / vom Browser blockiert), koppelt sich die Seite nach 3 s von selbst im Browser
+  setTimeout(()=>{if(ov.isConnected&&!document.hidden)$('#stayWeb').click();},3000);   // gleich versuchen, die App zu oeffnen (manche Browser blockieren das - dann bleibt der Knopf)
   $('#stayWeb').onclick=()=>{ov.remove();history.replaceState(null,'',location.pathname+location.search);pairFromLink(L.origin,L.code);};
 }
 function handleDeepLink(u){
   if(/^com\.ari\.assistant:/.test(String(u))){gHandleRedirect(u);return;}
-  {const L=parseLink(String(u));if(L&&/^https:/i.test(String(u))){goTab('pc');pairFromLink(L.origin,L.code);return;}}   // App-Link aus der Mail: https://…/app/#pc=…&l=…
+  {const L=parseAnyLink(String(u));if(L&&/^https?:/i.test(String(u))){goTab('pc');pairFromLink(L.origin,L.code);return;}}   // App-Link aus der Mail: https://…/app/#pc=…&l=…
   try{const x=new URL(String(u).replace(/^ari:[/][/]/,'https://ari.invalid/'));const o=x.searchParams.get('pc'),c=x.searchParams.get('l');
     if(o&&c){goTab('pc');pairFromLink(o.replace(/[/]+$/,''),c);}}catch(e){}
 }
@@ -914,9 +935,18 @@ if(NATIVE){setTimeout(()=>checkUpdate(false),1500);setInterval(()=>checkUpdate(f
 /* ---------- QR-Code vom PC scannen ---------- */
 let qrStream=null,qrRaf=0;
 async function qrStart(){
-  $('#qrOv').style.display='flex';$('#qrMsg').textContent='Richte die Kamera auf den QR-Code am PC (Einstellungen → HANDY).';
-  try{qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});}
-  catch(e){qrStop();$('#pcMsg').textContent='Kamera nicht erlaubt (Handy-Einstellungen → Apps → A.R.I → Berechtigungen).';return;}
+  const ov=$('#qrOv');ov.style.display='flex';$('#qrMsg').textContent='Kamera wird gestartet …';
+  const fail=(m)=>{qrStop();$('#pcMsg').textContent=m+' Du kannst auch ohne QR-Code koppeln: Link einfügen oder Adresse + Code eintragen.';alert(m);};
+  const AW=NATIVE&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AriWake;
+  if(AW&&AW.camRequest){                                   // Android-Berechtigung ausdruecklich anfragen (sonst bleibt die Kamera einfach schwarz)
+    try{const r=await AW.camRequest();if(!r.granted){fail('Die Kamera-Berechtigung fehlt. Handy-Einstellungen → Apps → A.R.I → Berechtigungen → Kamera erlauben.');return;}}catch(e){}
+  }
+  try{
+    qrStream=await Promise.race([navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}),new Promise((_,rej)=>setTimeout(()=>rej(Object.assign(new Error('timeout'),{name:'Timeout'})),9000))]);
+  }catch(e){
+    fail(e&&e.name==='NotFoundError'?'Keine Kamera gefunden.':e&&e.name==='NotReadableError'?'Die Kamera wird gerade von einer anderen App benutzt.':e&&e.name==='Timeout'?'Die Kamera startet nicht (keine Antwort).':'Kamera nicht erlaubt ('+(e&&e.name||'?')+').');return;
+  }
+  $('#qrMsg').textContent='Richte die Kamera auf den QR-Code am PC (Einstellungen → HANDY).';
   const v=$('#qrVid');v.srcObject=qrStream;await v.play().catch(()=>{});
   const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});let n=0;
   const tick=()=>{
@@ -925,8 +955,8 @@ async function qrStart(){
       const sc=Math.min(1,640/v.videoWidth);c.width=Math.round(v.videoWidth*sc);c.height=Math.round(v.videoHeight*sc);x.drawImage(v,0,0,c.width,c.height);
       const d=x.getImageData(0,0,c.width,c.height),r=window.jsQR&&jsQR(d.data,d.width,d.height);
       if(r&&r.data){
-        const L=parseLink(r.data),M=/^(https?:[/][/][^/#]+)[/]phone#c=([0-9]{6})/.exec(r.data);
-        if(L||M){qrStop();if(L)pairFromLink(L.origin,L.code);else if(NATIVE)pairFromLink(M[1],M[2]);else $('#pcLink').value=r.data;return;}
+        const A=parseAnyLink(r.data),M0=/[/]phone#[cl]=/.test(r.data);
+        if(A||M0){qrStop();if(A)pairFromLink(A.origin,A.code);else $('#pcLink').value=r.data;return;}
         $('#qrMsg').textContent='Das ist kein A.R.I-QR-Code.';
       }
     }
@@ -937,6 +967,47 @@ async function qrStart(){
 function qrStop(){cancelAnimationFrame(qrRaf);if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null;}$('#qrOv').style.display='none';}
 $('#qrScan').onclick=qrStart;$('#qrClose').onclick=qrStop;
 
+/* ---------- Hintergrund-Betrieb (nur Android-App, optional): am Leben bleiben + Benachrichtigungen ---------- */
+const BGP=()=>window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AriWake;
+async function bgRefresh(){
+  if(!NATIVE||!BGP()||!BGP().bgStatus)return;$('#bgSection').style.display='';
+  try{const s=await BGP().bgStatus();$('#bgTag').textContent=s.running?'AN':'AUS';$('#bgToggle').textContent=s.running?'AUSSCHALTEN':'EINSCHALTEN';
+    $('#bgMsg').textContent=(s.notif?'':'Bitte erlaube A.R.I Benachrichtigungen (Handy-Einstellungen → Apps → A.R.I). ')+(s.battery?'':'Tipp: Stelle die Akku-Optimierung für A.R.I auf „Nicht optimieren“, sonst beendet Android die App manchmal trotzdem.');}catch(e){}
+}
+async function bgNotify(title,text,id){try{if(BGP()&&BGP().notify)await BGP().notify({title,text,id});}catch(e){}}
+// Neue Mails und bald anstehende Termine melden (jeweils nur einmal)
+async function bgCheck(){
+  if(cfg.bg!=='1')return;
+  try{await loadCalData();}catch(e){return;}
+  if(!calCache)return;
+  const seenM=store.get('ari-app-seenmail',null),ids=(calCache.mails||[]).map(m=>String(m.id||m.from+m.subject));
+  if(seenM===null){store.set('ari-app-seenmail',ids.slice(-300));}      // beim ersten Mal nichts melden
+  else{
+    const fresh=(calCache.mails||[]).filter(m=>!seenM.includes(String(m.id||m.from+m.subject)));
+    if(fresh.length)bgNotify(fresh.length===1?'Neue Mail: '+fresh[0].from:fresh.length+' neue Mails',fresh.slice(0,3).map(m=>m.from+': '+(m.subject||'')).join('\n'),7001);
+    store.set('ari-app-seenmail',[...new Set(seenM.concat(ids))].slice(-300));
+  }
+  const notified=store.get('ari-app-notified',{}),now=Date.now(),keep={};
+  (calCache.events||[]).forEach(e=>{
+    if(e.allDay)return;const st=new Date(e.start).getTime(),k=e.title+'|'+e.start,mins=Math.round((st-now)/60000);
+    if(mins>=-5&&mins<=45&&!notified[k]){bgNotify('Termin '+(mins<=1?'jetzt':'in '+mins+' Min.')+': '+e.title,new Date(st).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr'+(e.location?' · '+e.location:''),8000+(st%1000));notified[k]=now;}
+    if(notified[k]&&now-notified[k]<86400000)keep[k]=notified[k];
+  });
+  store.set('ari-app-notified',keep);
+}
+if(NATIVE&&BGP()&&BGP().bgStatus){
+  $('#bgToggle').onclick=async()=>{
+    const s=await BGP().bgStatus();
+    if(s.running){await BGP().bgStop();cfg.bg='0';saveCfg();}
+    else{try{await BGP().bgStart();cfg.bg='1';saveCfg();setTimeout(bgCheck,4000);}catch(e){$('#bgMsg').textContent='Konnte nicht starten: '+(e&&e.message||e);}}
+    bgRefresh();
+  };
+  $('#bgBattery').onclick=()=>{try{BGP().openBatterySettings();}catch(e){}};
+  bgRefresh();
+  try{Capacitor.Plugins.App.addListener('appStateChange',st=>{if(st.isActive)bgRefresh();});}catch(e){}
+  setInterval(bgCheck,5*60*1000);
+  if(cfg.bg==='1')BGP().bgStatus().then(s=>{if(!s.running)BGP().bgStart().then(bgRefresh).catch(()=>{});else setTimeout(bgCheck,8000);});
+}
 /* ---------- Weckwort im Hintergrund (nur Android-App, optional) ---------- */
 const WK=()=>window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.AriWake;
 async function wakeRefresh(){
