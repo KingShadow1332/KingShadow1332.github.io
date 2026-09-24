@@ -2,6 +2,6 @@
     "versionCode":  8,
     "versionName":  "1.5.2",
     "apk":  "ARI.apk",
-    "notes":  "Neu: Befehle an den PC - Saetze mit PC, Rechner, Lautstaerke, Screenshot usw. fuehrt dein PC aus (Einstellungen \u003e Synchronisation \u003e Befehle an den PC)\nKlare Meldung, wenn der PC nicht erreichbar oder nicht gekoppelt ist",
+    "notes":  "Neu: Befehle an den PC - Saetze mit PC, Rechner, Lautstaerke, Screenshot usw. fuehrt dein PC aus (Einstellungen \u003e Synchronisation \u003e Befehle an den PC)\nTermine, Kalender und Mails bleiben in der App und laufen nicht ueber den PC\nKlare Meldung, wenn der PC nicht erreichbar oder nicht gekoppelt ist",
     "sizeMb":  5.9
 }
