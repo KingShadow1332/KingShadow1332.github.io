@@ -137,7 +137,9 @@ async function ask(text){
   if(/^(welcher tag|welches datum|den wievielten)/.test(q.trim()))return 'Heute ist '+new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'.';
   // Befehle an den PC: ueber den gekoppelten Hub ausfuehren (Apps oeffnen, Lautstaerke, Musik, Screenshot ...)
   const route=cfg.pcRoute||'auto',pcIntent=PC_RE.test(q),paired=!!(sync.token&&sync.origin);
-  if(route!=='off'&&(route==='always'||pcIntent)){
+  // Termine, Kalender und Mails beantwortet die App selbst (auch im Modus IMMER) - die laufen nicht ueber den PC
+  const LOCAL_RE=/termin|kalender|calendar|geburtstag|e-?mail|mails?\b|posteingang|erinner/i;
+  if(route!=='off'&&(route==='always'?!LOCAL_RE.test(q):pcIntent)){
     if(paired){
       const r=await askPc();
       if(r.reply){links=r.links||[];return r.reply;}
