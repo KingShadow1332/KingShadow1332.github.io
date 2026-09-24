@@ -525,6 +525,11 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
           <button class="btn" id="qrScan" style="width:100%;margin-bottom:8px">▣ QR-CODE VOM PC SCANNEN</button>
           <button class="btn pri" id="pcGo" style="width:100%">PC ÖFFNEN</button>
           <div class="dim2" id="pcMsg" style="margin-top:8px"></div>
+          <div class="set" style="margin-top:14px"><label>ODER OHNE QR-CODE KOPPELN</label>
+            <input id="pcAddr" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PC-Adresse, z. B. 192.168.1.20 oder https://….trycloudflare.com">
+            <input id="pcCode" inputmode="numeric" autocomplete="off" placeholder="Koppelcode (6 Ziffern vom PC)" style="margin-top:8px">
+            <button class="btn pri" id="pcPair" style="width:100%;margin-top:8px">MIT CODE KOPPELN</button>
+            <div class="dim" style="margin-top:6px">Am PC: A.R.I → Einstellungen → HANDY → „Koppelcode erzeugen“. Dort stehen Adresse und Code (5 Minuten gültig).</div></div>
           <div id="pcSaved" style="margin-top:12px"></div>
         </div>
       </div>
@@ -556,6 +561,16 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
       <div class="row" style="margin-top:10px"><button class="btn" id="updCheck">NACH UPDATES SUCHEN</button><button class="btn pri" id="updGo" style="display:none">JETZT AKTUALISIEREN</button></div>
       <div class="dim2" id="updProg" style="margin-top:8px"></div>
     </div>
+    <details class="set-section" id="bgSection" style="display:none">
+      <summary>IM HINTERGRUND LAUFEN</summary>
+      <div class="set-section-body">
+        <div class="panel"><div class="panel-h cy"><span class="ico">⟳</span><span class="t">HINTERGRUND-BETRIEB</span><span class="tag" id="bgTag">AUS</span></div>
+          <div class="dim">A.R.I bleibt im Hintergrund am Leben (ohne Mikrofon), prüft alle paar Minuten Termine und Mails und meldet sich mit einer Benachrichtigung bei neuen Mails und anstehenden Terminen. Dafür läuft eine dauerhafte, leise Benachrichtigung.</div>
+          <div class="row" style="margin-top:10px"><button class="btn pri" id="bgToggle">EINSCHALTEN</button><button class="btn" id="bgBattery">AKKU-OPTIMIERUNG AUS</button></div>
+          <div class="dim2" id="bgMsg" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </details>
     <details class="set-section" id="wakeSection" style="display:none">
       <summary>IM HINTERGRUND HÖREN</summary>
       <div class="set-section-body">
