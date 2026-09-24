@@ -1,7 +1,7 @@
 {
-    "versionCode":  9,
-    "versionName":  "1.5.3",
+    "versionCode":  10,
+    "versionName":  "1.5.4",
     "apk":  "ARI.apk",
-    "notes":  "Termine und E-Mails laufen jetzt auch ohne PC: Anmeldung bei Google direkt in der App (Einstellungen \u003e Synchronisation \u003e Google direkt)\nZuletzt geladene Termine und Mails bleiben sichtbar, wenn der PC aus ist\nOptional: Kalender per geheimer iCal-Adresse\nBefehle an den PC bleiben; Termine, Kalender und Mails beantwortet die App selbst",
+    "notes":  "Termine und Mails ueber Google direkt in der App - der PC muss nicht an sein (Einstellungen \u003e Synchronisation \u003e Google direkt)\nLink aus der Mail oeffnet die App direkt und koppelt automatisch\nDie App findet die Adresse des PCs selbst, wenn sie sich aendert\nNeues, dezentes Spam-Symbol; Emojis werden nicht mehr vorgelesen\nZuletzt geladene Termine und Mails bleiben ohne PC sichtbar",
     "sizeMb":  5.9
 }
