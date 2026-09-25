@@ -578,7 +578,7 @@ async function gLoadMails(){
     try{const d=await gApi('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject');
       const H={};((d.payload&&d.payload.headers)||[]).forEach(x=>H[x.name.toLowerCase()]=x.value);
       const raw=H.from||'?',name=(/^\s*"?([^"<]+?)"?\s*</.exec(raw)||[])[1]||raw.replace(/[<>]/g,'');
-      return {id:m.id,from:name.trim(),addr:raw,subject:H.subject||''};}catch(e){return null;}
+      return {id:m.id,from:name.trim(),addr:raw,subject:H.subject||'',src:'g'};}catch(e){return null;}
   }));
   return out.filter(x=>x&&!spam.some(s=>x.addr.toLowerCase().includes(s)||s.includes(x.from.toLowerCase()))).slice(0,10);
 }
@@ -705,11 +705,44 @@ function renderCalMails(d){
   if(!mails.length){list.innerHTML='<li class="termin-empty">Keine wichtigen E-Mails — alles ruhig.</li>';return;}
   list.innerHTML=mails.map(m=>{
     const from=String(m.from||'?'),color=calColor(from),initial=(from.replace(/[^A-Za-zÄÖÜäöü0-9]/g,'').charAt(0)||'✉').toUpperCase();
-    return `<li class="termin-item notif-card" style="--cal-color:${color}" data-mail-id="${escHtml(m.id||'')}" data-mail-from="${escHtml(from)}"><div class="t-date"><b>${escHtml(initial)}</b><span>MAIL</span></div><div class="t-body"><div class="ttitle">${escHtml(from)}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(m.subject||'')}</span></span></div></div><button type="button" class="notif-dismiss" data-spam="1" title="Als Spam markieren" aria-label="Als Spam markieren"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg></button></li>`;
+    return `<li class="termin-item notif-card" style="--cal-color:${color}" data-mail-id="${escHtml(m.id||'')}" data-mail-from="${escHtml(from)}" data-mail-src="${escHtml(m.src||'')}" data-mail-sub="${escHtml(m.subject||'')}"><div class="t-date"><b>${escHtml(initial)}</b><span>MAIL</span></div><div class="t-body"><div class="ttitle">${escHtml(from)}</div><div class="when"><span class="chip"><span class="dot"></span><span class="txt">${escHtml(m.subject||'')}</span></span></div></div><button type="button" class="notif-dismiss" data-spam="1" title="Als Spam markieren" aria-label="Als Spam markieren"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg></button></li>`;
   }).join('');
 }
+// Klick auf eine Mail: ganzen Text lesen
+function gBodyText(p){
+  const dec=b=>{try{const s=atob(String(b).replace(/-/g,'+').replace(/_/g,'/'));return new TextDecoder('utf-8').decode(Uint8Array.from(s,c=>c.charCodeAt(0)));}catch(e){return '';}};
+  const parts=[];(function walk(x){if(!x)return;if(x.body&&x.body.data&&!x.filename)parts.push({t:x.mimeType,d:dec(x.body.data)});(x.parts||[]).forEach(walk);})(p);
+  const plain=parts.filter(x=>x.t==='text/plain').map(x=>x.d).join('\n').trim();if(plain)return plain;
+  const html=parts.filter(x=>x.t==='text/html').map(x=>x.d).join('\n');
+  return html.replace(/<(script|style|head)[^>]*>[\s\S]*?<\/\1>/gi,' ').replace(/<br\s*\/?>|<\/(p|div|tr|li|h\d)>/gi,'\n').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/[ \t]+/g,' ').replace(/\n\s*\n\s*\n+/g,'\n\n').trim();
+}
+async function openMail(li){
+  const id=li.dataset.mailId,src=li.dataset.mailSrc;
+  let ov=document.getElementById('mailOv');if(ov)ov.remove();
+  ov=document.createElement('div');ov.id='mailOv';ov.style.cssText='position:fixed;inset:0;z-index:9990;background:rgba(3,2,9,.94);display:flex;flex-direction:column;padding:16px;overflow:hidden';
+  ov.innerHTML='<div style="flex:none"><div style="font:600 10px var(--font-mono);letter-spacing:.16em;color:var(--cyan)">E-MAIL</div><div id="moSub" style="font:700 17px/1.3 var(--font-display);margin-top:6px;color:#fff"></div><div id="moFrom" style="font:500 11px var(--font-mono);color:#9a97b0;margin-top:4px"></div></div><div id="moBody" style="flex:1;overflow:auto;margin:14px 0;font:400 13px/1.6 var(--font-mono);white-space:pre-wrap;word-break:break-word;color:#dcdaf0">Lade …</div><button class="btn pri" id="moClose" style="flex:none;width:100%">SCHLIESSEN</button>';
+  document.body.appendChild(ov);
+  $('#moSub').textContent=li.dataset.mailSub||'(kein Betreff)';$('#moFrom').textContent=li.dataset.mailFrom||'';
+  $('#moClose').onclick=()=>ov.remove();
+  try{
+    if(src==='g'){
+      const d=await gApi('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+encodeURIComponent(id)+'?format=full');
+      const H={};((d.payload&&d.payload.headers)||[]).forEach(x=>H[x.name.toLowerCase()]=x.value);
+      if(H.subject)$('#moSub').textContent=H.subject;
+      $('#moFrom').textContent=(H.from||'')+(H.date?'  ·  '+H.date:'');
+      $('#moBody').textContent=gBodyText(d.payload)||d.snippet||'(kein Text)';
+    }else{
+      if(!sync.token||!sync.origin)throw new Error('Dafür muss die App mit dem PC verbunden oder bei Google angemeldet sein.');
+      const r=await hubFetch('/phone/api/mail?id='+encodeURIComponent(id),{headers:{'X-Ari-Token':sync.token}});
+      const j=await r.json();if(j.error)throw new Error(j.error);
+      if(j.subject)$('#moSub').textContent=j.subject;$('#moFrom').textContent=(j.from||'')+(j.date?'  ·  '+j.date:'');
+      $('#moBody').textContent=j.text||'(kein Text)';
+    }
+  }catch(e){$('#moBody').textContent='Konnte die Mail nicht laden: '+String(e&&e.message||e).slice(0,200);}
+}
 $('#mailList').addEventListener('click',async(e)=>{
-  const btn=e.target.closest('[data-spam]');if(!btn)return;
+  const btn=e.target.closest('[data-spam]');
+  if(!btn){const li0=e.target.closest('[data-mail-id]');if(li0)openMail(li0);return;}
   const li=btn.closest('[data-mail-id]');const id=li.dataset.mailId,from=li.dataset.mailFrom;
   li.remove();
   if(gOn()){const sp=spamList();const k=(li.dataset.mailFrom||'').toLowerCase();if(k&&!sp.includes(k)){sp.push(k);store.set('ari-app-spam',sp.slice(-200));}}
@@ -795,18 +828,47 @@ async function hubFetch(path,opts){
 }
 const SYNC_TRUSTED=new RegExp('^https:[/][/][a-z0-9-]+[.]trycloudflare[.]com$');
 const LAN_OK=new RegExp('^http:[/][/](192[.]168[.][0-9]+[.][0-9]+|10[.][0-9]+[.][0-9]+[.][0-9]+|172[.](1[6-9]|2[0-9]|3[01])[.][0-9]+[.][0-9]+)(:[0-9]+)?$');
-function syncStatus(t,ok){$('#syncStatus').textContent=t;$('#syncTag').textContent=sync.token?(ok===false?'GETRENNT':'VERBUNDEN'):'–';}
+function syncStatus(t,ok){
+  $('#syncStatus').textContent=t;$('#syncTag').textContent=sync.token?(ok===false?'GETRENNT':'VERBUNDEN'):'–';
+  // Gleiche Meldung gut sichtbar im PC-Tab (dort schaut man nach dem Koppeln hin)
+  const box=$('#pcState'),tag=$('#pcTag');
+  if(box){
+    const conn=!!sync.token&&ok!==false;
+    box.textContent=(conn&&!/^✓/.test(t)?'✓ Mit dem PC verbunden. ':(ok===false?'⚠ ':''))+t;
+    box.style.borderColor=conn?'rgba(57,255,158,.55)':(ok===false?'rgba(255,210,61,.6)':'rgba(255,255,255,.14)');
+    box.style.color=conn?'#39ff9e':'';
+    if(tag)tag.textContent=sync.token?(ok===false?'GETRENNT':'VERBUNDEN'):'–';
+  }
+}
+// Feste Geraete-Kennung dieser App (damit derselbe Handy-Eintrag beim erneuten Koppeln ersetzt wird, statt sich zu vermehren)
+function devId(){let d=store.get('ari-app-devid',null);if(!d){d='d'+Math.random().toString(36).slice(2,12);store.set('ari-app-devid',d);}return d;}
+function toast(msg){
+  const t=document.createElement('div');t.textContent=msg;
+  t.style.cssText='position:fixed;left:16px;right:16px;bottom:88px;z-index:9996;padding:14px 16px;border-radius:14px;background:#0b1620;border:1px solid #39ff9e;color:#dff6ff;font:600 13px var(--font-mono);text-align:center;box-shadow:0 12px 30px -10px #000';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),4200);
+}
+// Sicherheitsabfrage beim Koppeln (schoener Dialog statt der Systembox): nur bestaetigen, wenn der Link vom eigenen A.R.I stammt
+function askPair(origin){
+  return new Promise(res=>{
+    const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:9995;background:rgba(3,2,9,.82);display:flex;align-items:center;justify-content:center;padding:20px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)';
+    ov.innerHTML='<div style="width:100%;max-width:360px;border-radius:20px;border:1px solid rgba(255,45,120,.4);background:linear-gradient(160deg,#1e1a34,#0c0b16);padding:22px 20px 18px;color:#dcdaf0;text-align:center;box-shadow:0 30px 70px -20px #000"><div style="font:700 13px var(--font-mono);letter-spacing:.16em;color:#fff">MIT DEM PC VERBINDEN?</div><div style="margin-top:10px;font:400 12.5px/1.55 var(--font-mono)">Gehirn, Einstellungen und Schlüssel werden mit diesem PC abgeglichen.</div><div id="apAddr" style="margin-top:10px;font:600 11px/1.4 var(--font-mono);color:#29d3f5;word-break:break-all"></div><div style="margin-top:10px;font:400 11px/1.5 var(--font-mono);opacity:.7">Nur bestätigen, wenn der Link von deinem eigenen A.R.I stammt.</div><button class="btn pri" id="apOk" style="width:100%;margin-top:16px">JA, VERBINDEN</button><button class="btn" id="apNo" style="width:100%;margin-top:8px">ABBRECHEN</button></div>';
+    document.body.appendChild(ov);ov.querySelector('#apAddr').textContent=origin;
+    ov.querySelector('#apOk').onclick=()=>{ov.remove();res(true);};ov.querySelector('#apNo').onclick=()=>{ov.remove();res(false);};
+  });
+}
 async function pairFromLink(origin,code){
   if(!(SYNC_TRUSTED.test(origin)||(NATIVE&&LAN_OK.test(origin)))){syncStatus('Ungültige PC-Adresse im Link.',false);return;}
-  if(!confirm('Mit deinem PC verbinden und alles synchronisieren (Gehirn, Einstellungen, API-Schlüssel)?\n\nAdresse: '+origin+'\n\nNur bestätigen, wenn der Link von deinem eigenen A.R.I stammt.'))return;
+  if(sync.token&&sync.origin===origin){toast('Schon mit diesem PC verbunden.');goTab('pc');syncNow();return;}
+  if(!(await askPair(origin)))return;
   syncStatus('Verbinde …');
   try{
-    const r=await fetch(origin+'/phone/pair',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,name:'Handy-App'})});
+    const r=await fetch(origin+'/phone/pair',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,name:'Handy-App',dev:devId()})});
     const d=await r.json();
     if(!r.ok||!d.token){syncStatus('Kopplung fehlgeschlagen: '+(d.error||r.status),false);return;}
     sync.origin=origin;sync.token=d.token;sync.topic=d.topic||'';sync.dirtyKeys=false;sync.dirtySet=false;saveSync();
-    await syncNow();goTab('pc');
-  }catch(e){syncStatus('PC nicht erreichbar (läuft A.R.I und der Tunnel?).',false);}
+    goTab('pc');await syncNow();
+    if(sync.token)toast('✓ Mit dem PC verbunden');
+  }catch(e){syncStatus('Der Link ist abgelaufen oder der PC ist nicht erreichbar. Jeder Neustart von A.R.I erzeugt eine neue Adresse und einen neuen Link: am PC unter Einstellungen → HANDY den „Kopplungs-Link“ neu kopieren oder per Mail senden (Fernzugriff muss an sein).',false);}
 }
 // Erkennt jede Art von Kopplungs-Link: App-Link (…/app/#pc=…&l=…), Tunnel-Link (…trycloudflare.com/phone#l=…) und Adresse mit 6-stelligem Code (…/phone#c=…)
 function parseAnyLink(str){
