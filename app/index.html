@@ -392,6 +392,7 @@ nav{position:relative;z-index:3;display:flex;justify-content:space-around;paddin
 nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:var(--text-dim2);font:600 8.5px var(--font-mono);letter-spacing:.12em;padding:6px 0}
 nav button b{font-size:19px;line-height:1;font-weight:400}
 nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(--pink))}
+.termin-item.notif-card{cursor:pointer}
 .notif-dismiss{flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--text-dim2,#7d7a92);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .15s ease,border-color .15s ease,background .15s ease}
 .notif-dismiss:active,.notif-dismiss:hover{color:var(--pink,#ff2d78);border-color:color-mix(in srgb,var(--pink,#ff2d78) 55%,transparent);background:color-mix(in srgb,var(--pink,#ff2d78) 12%,transparent)}
 .notif-dismiss svg{display:block}
@@ -519,7 +520,8 @@ nav button.on{color:var(--pink)}nav button.on b{filter:drop-shadow(0 0 8px var(-
     <details class="set-section" open>
       <summary>MIT DEM PC VERBINDEN</summary>
       <div class="set-section-body">
-        <div class="panel"><div class="panel-h cy"><span class="ico">▣</span><span class="t">MIT DEM PC VERBINDEN</span></div>
+        <div class="panel"><div class="panel-h cy"><span class="ico">▣</span><span class="t">MIT DEM PC VERBINDEN</span><span class="tag" id="pcTag">–</span></div>
+          <div id="pcState" style="margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);font-size:12px;line-height:1.5">Nicht mit dem PC verbunden.</div>
           <div class="dim" style="margin-bottom:10px">Die App läuft ohne PC. Für Bildschirm, Steuerung und Mediensteuerung öffnest du deinen PC – im Heim-WLAN oder unterwegs über den Link, den A.R.I dir per Mail schickt.</div>
           <div class="set"><label>PC-LINK / ADRESSE</label><input id="pcLink" placeholder="https://….trycloudflare.com/phone#l=… oder http://192.168.…:5000/phone"></div>
           <button class="btn" id="qrScan" style="width:100%;margin-bottom:8px">▣ QR-CODE VOM PC SCANNEN</button>
