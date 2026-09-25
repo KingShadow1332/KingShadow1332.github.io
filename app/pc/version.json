@@ -1,7 +1,7 @@
 {
-    "version":  13,
-    "name":  "1.3.5",
+    "version":  14,
+    "name":  "1.3.6",
     "zip":  "ari-pc.zip",
-    "sha256":  "1eba65dc6ab8bdb7f556b3f9e78ad8bfe40ae000eaccca54a9d240f96f3b2fe6",
-    "notes":  "Deine gespeicherte Mail-Adresse wird im HUD nicht mehr im Klartext angezeigt\nKopplung mit dem Handy: Links koppeln sich jetzt von selbst\nKleine Fehlerbehebungen"
+    "sha256":  "63ad84350f3a98aea61a4d09d6f40b898ddcb3a8677ee323ccb53d72b6f972bb",
+    "notes":  "Mails im HUD anklicken: der ganze Text wird angezeigt\nKopplungs-Link geht immer an dein verbundenes Google-Konto, keine Adresse mehr eintippen\nKopplung: gleiches Handy ersetzt seinen alten Eintrag statt doppelt zu erscheinen\nKleine Verbesserungen"
 }
